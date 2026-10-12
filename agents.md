@@ -24,6 +24,8 @@ Hieronder staan de actieve AI-agents binnen dit project en hun afgebakende veran
 - **Taken:** 
   - Opsplitsen van grote taken in kleinere, werkbare features.
   - Aanmaken van de initiële outline of pseudocode.
+  - Benoemt afhankelijkheden, Unity-scènes/prefabs en mogelijke Mixed Reality-impact voordat ontwikkeling start.
+  - Legt meetbare acceptatiecriteria vast, inclusief performance- en toegankelijkheidseisen.
 - **Output:** Uitbreidingen van documentatie of architectuur-schema's.
 
 ### Agent 2: De Ontwikkelaar (Code Agent)
@@ -32,6 +34,8 @@ Hieronder staan de actieve AI-agents binnen dit project en hun afgebakende veran
   - Leest de vereisten uit `Agents.md` en specifieke feature-tickets.
   - Genereert scripts of configuratiebestanden.
   - Test lokaal (voor zover mogelijk) op syntax-fouten.
+  - Houdt wijzigingen klein, gericht en beperkt tot de toegewezen feature-branch.
+  - Vermijdt onnodige textures, hoge polygon-aantallen en runtime-allocaties in veel uitgevoerde Unity-code.
 - **Output:** Source code bestanden (bijv. `.cs`, `.py`, `.js`).
 
 ### Agent 3: De Reviewer (Kwaliteitscontrole)
@@ -39,4 +43,24 @@ Hieronder staan de actieve AI-agents binnen dit project en hun afgebakende veran
 - **Taken:**
   - Controleren of de nieuwe code voldoet aan de projectomschrijving.
   - Zoeken naar bugs, security issues, en code smell.
+  - Controleert Unity-specifieke risico's zoals ontbrekende referenties, ongebruikte serialized velden en performance-regressies.
+  - Controleert of de PR-beschrijving testresultaten en bekende beperkingen vermeldt.
 - **Output:** Feedback achterlaten op Pull Requests.
+
+## 4. Samenwerkingsregels
+
+- Werk nooit rechtstreeks op `main`; maak voor elke wijziging een aparte branch volgens `workflow.md`.
+- Lees vóór een wijziging de relevante scene, prefab en scripts om conflicterende aanpassingen te voorkomen.
+- Wijzig geen bestanden die door een andere agent zijn toegewezen zonder dit expliciet in de PR te vermelden.
+- Houd commits klein en beschrijf duidelijk wat er verandert en waarom.
+- Meld blokkades, aannames en niet-uitgevoerde tests in de pull request zodat een reviewer de juiste context heeft.
+
+## 5. Definition of Done
+
+Een taak is klaar wanneer aan alle onderstaande punten is voldaan:
+
+- De acceptatiecriteria van de Architect zijn aantoonbaar verwerkt.
+- De wijziging is getest in de Unity Editor voor zover de lokale omgeving dat toelaat.
+- Er zijn geen nieuwe console errors of warnings die door de wijziging zijn veroorzaakt.
+- De branch is gepusht en heeft een pull request naar `main` met een volledige beschrijving.
+- De Reviewer heeft de performance- en Mixed Reality-impact gecontroleerd.
