@@ -3,6 +3,7 @@ using UnityEngine.Events;
 
 public class GazeTrigger : MonoBehaviour
 {
+    [Tooltip("Laat dit gerust leeg! Het script vindt de ingespawnde camera zelf.")]
     [SerializeField] private Transform playerCamera;
     [SerializeField] private float requiredGazeTime = 2.0f;
     [SerializeField] private float maxGazeDistance = 5.0f;
@@ -13,18 +14,16 @@ public class GazeTrigger : MonoBehaviour
     private float _currentGazeTime = 0f;
     private bool _hasTriggered = false;
 
-    private void Start()
-    {
-        if (playerCamera == null && Camera.main != null)
-        {
-            playerCamera = Camera.main.transform;
-        }
-    }
-
     private void Update()
     {
         if (_hasTriggered && triggerOnce) return;
-        if (playerCamera == null) return;
+
+        // Zoek automatisch de ingespawnde camera op als het vakje leeg is
+        if (playerCamera == null)
+        {
+            if (Camera.main != null) playerCamera = Camera.main.transform;
+            else return;
+        }
 
         Ray ray = new Ray(playerCamera.position, playerCamera.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, maxGazeDistance))
@@ -35,6 +34,7 @@ public class GazeTrigger : MonoBehaviour
                 if (_currentGazeTime >= requiredGazeTime)
                 {
                     _hasTriggered = true;
+                    Debug.Log($"[GazeTrigger] 2 seconden gekeken naar {gameObject.name}!");
                     onGazeCompleted?.Invoke();
                 }
                 return;

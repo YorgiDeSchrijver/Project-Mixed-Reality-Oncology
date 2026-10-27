@@ -29,6 +29,10 @@ public class PerspectiveSwitcher : MonoBehaviour
         yield return StartCoroutine(FadeAlpha(0f, 1f));
 
         // 2. Verplaats en roteer de speler naar de nieuwe stoel
+        var cc = xrOriginTransform.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        xrOriginTransform.SetPositionAndRotation(targetAnchor.position, targetAnchor.rotation);
+        if (cc != null) cc.enabled = true;
         if (xrOriginTransform != null && targetAnchor != null)
         {
             xrOriginTransform.SetPositionAndRotation(targetAnchor.position, targetAnchor.rotation);

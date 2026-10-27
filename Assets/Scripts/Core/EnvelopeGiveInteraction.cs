@@ -5,19 +5,16 @@ using UnityEngine.Events;
 public class EnvelopeGiveInteraction : MonoBehaviour
 {
     [Header("Referenties")]
-    [Tooltip("Sleep hier het ObjectGlowPulse script van de envelop in.")]
     [SerializeField] private ObjectGlowPulse glowScript;
 
-    [Tooltip("Tag van de speler-hand of controller (bijv. 'PlayerHand') voor hover-effect.")]
-    [SerializeField] private string handTag = "PlayerHand";
-
-    [Tooltip("Tag van de trigger-zone op tafel of bij Luc's hand (bijv. 'GiveZone').")]
-    [SerializeField] private string giveZoneTag = "GiveZone";
+    [Header("Instellingen")]
+    [Tooltip("Naam van het GeefZone-object óf de Tag van het object.")]
+    [SerializeField] private string giveZoneTagOrName = "GiveZone";
 
     [Header("Events")]
     public UnityEvent onHoverEnter;
     public UnityEvent onHoverExit;
-    public UnityEvent onEnvelopeDelivered; // Koppel dit aan Scène 2 of ChoiceWindowManager.ConfirmEnvelopeGiven()
+    public UnityEvent onEnvelopeDelivered;
 
     private bool _isDelivered = false;
 
@@ -25,34 +22,44 @@ public class EnvelopeGiveInteraction : MonoBehaviour
     {
         if (_isDelivered) return;
 
-        // 1. Hover-effect wanneer de hand van de speler de envelop raakt
-        if (other.CompareTag(handTag))
-        {
-            if (glowScript != null) glowScript.SetGlowing(true);
-            onHoverEnter?.Invoke();
-        }
-
-        // 2. Aflever-check wanneer de envelop in de zone van Luc/tafel komt
-        if (other.CompareTag(giveZoneTag))
+        // Check of we de GeefZone raken (werkt nu op Tag ÉN op GameObject-naam, zonder te crashen!)
+        if (IsGiveZone(other.gameObject))
         {
             _isDelivered = true;
             if (glowScript != null) glowScript.SetGlowing(false);
+            Debug.Log("[EnvelopeGiveInteraction] Succes! Envelop is afgeleverd in de GeefZone!");
             onEnvelopeDelivered?.Invoke();
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    private bool IsGiveZone(GameObject obj)
     {
-        if (_isDelivered) return;
+        // Check eerst of de naam van het object overeenkomt (bijv. "GiveZone" of "DropZone_Dad")
+        if (obj.name.Contains(giveZoneTagOrName) || obj.name.Contains("DropZone"))
+            return true;
 
-        if (other.CompareTag(handTag))
+        // Check veilig de Tag zonder dat Unity crasht als de Tag niet bestaat
+        try
         {
-            if (glowScript != null) glowScript.SetGlowing(false);
-            onHoverExit?.Invoke();
+            return obj.CompareTag(giveZoneTagOrName);
+        }
+        catch
+        {
+            return false;
         }
     }
 
-    // Handig om de envelop te resetten als je van Scène 1 naar Scène 4 gaat
+    // Wordt aangeroepen door je muis/camera (of later VR-controller) voor het gloei-effect
+    public void SetHover(bool isHovering)
+    {
+        if (_isDelivered) return;
+
+        if (glowScript != null) glowScript.SetGlowing(isHovering);
+
+        if (isHovering) onHoverEnter?.Invoke();
+        else onHoverExit?.Invoke();
+    }
+
     public void ResetDeliveryState()
     {
         _isDelivered = false;
