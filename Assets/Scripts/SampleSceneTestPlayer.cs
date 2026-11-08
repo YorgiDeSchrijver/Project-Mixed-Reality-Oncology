@@ -5,6 +5,7 @@ using UnityEngine.Rendering.Universal;
 public sealed class SampleSceneTestPlayer : MonoBehaviour
 {
     [Header("Beweging & Kijken")]
+    public bool disableMovement = false;
     [SerializeField] private float movementSpeed = 2.5f;
     [SerializeField] private float mouseSensitivity = 2.0f;
     [SerializeField] private float gravity = -9.81f;
@@ -71,7 +72,10 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
             }
         }
 
-        HandleMovement();
+        if (!disableMovement)
+        {
+            HandleMovement();
+        }
 
         if (Cursor.lockState == CursorLockMode.Locked)
         {

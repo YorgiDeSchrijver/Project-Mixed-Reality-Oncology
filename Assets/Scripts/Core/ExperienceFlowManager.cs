@@ -32,6 +32,7 @@ namespace Oncologie.Core
         [Header("Huidige Status")]
         [SerializeField] private ExperienceState currentState = ExperienceState.KitchenIntro;
         [SerializeField] private ScreeningChoice playerChoice = ScreeningChoice.None;
+        public ScreeningChoice GetPlayerChoice() => playerChoice;
 
         [Header("Locaties (Camera / Speler Transforms)")]
         [SerializeField] private Transform playerTransform;
@@ -258,11 +259,18 @@ namespace Oncologie.Core
             }
 
             // Dialoog Luc
-            if (AudioManager.Instance != null)
+            if (Oncologie.Dialogue.DialogueManager.Instance != null)
             {
-                AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucIntro, "Vader Luc");
+                Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Intro_Keuken");
             }
-            ShowSubtitle("Vader Luc: \"Kijk nu, alweer zo'n envelop voor die stoelgangtest... Ik voel me kerngezond, ik doe dat volgend jaar wel.\"", 6.5f);
+            else
+            {
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucIntro, "Vader Luc");
+                }
+                ShowSubtitle("Vader Luc: \"Kijk nu, alweer zo'n envelop voor die stoelgangtest... Ik voel me kerngezond, ik doe dat volgend jaar wel.\"", 6.5f);
+            }
 
             onExperienceStarted?.Invoke();
         }
@@ -281,19 +289,33 @@ namespace Oncologie.Core
 
             if (playerChoice == ScreeningChoice.IgnoredTrash)
             {
-                if (AudioManager.Instance != null)
+                if (Oncologie.Dialogue.DialogueManager.Instance != null)
                 {
-                    AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucTrash, "Vader Luc");
+                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Keuze_A_Negeren");
                 }
-                ShowSubtitle("Vader Luc: \"Zo, in de prullenmand. Geen zorgen maken om niks!\"", 3.5f);
+                else
+                {
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucTrash, "Vader Luc");
+                    }
+                    ShowSubtitle("Vader Luc: \"Zo, in de prullenmand. Geen zorgen maken om niks!\"", 3.5f);
+                }
             }
             else
             {
-                if (AudioManager.Instance != null)
+                if (Oncologie.Dialogue.DialogueManager.Instance != null)
                 {
-                    AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucKeys, "Vader Luc");
+                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Keuze_B_Aandringen");
                 }
-                ShowSubtitle("Vader Luc: \"Allee vooruit, omdat jij zo aandringt. Morgenochtend doe ik hem meteen.\"", 3.5f);
+                else
+                {
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucKeys, "Vader Luc");
+                    }
+                    ShowSubtitle("Vader Luc: \"Allee vooruit, omdat jij zo aandringt. Morgenochtend doe ik hem meteen.\"", 3.5f);
+                }
             }
 
             StartCoroutine(TransitionToColonRoutine());
@@ -336,7 +358,11 @@ namespace Oncologie.Core
             currentState = ExperienceState.ColonDarmwandeling;
             onColonEntered?.Invoke();
 
-            if (colonController != null)
+            if (Oncologie.Colon.ColonPathFollower.Instance != null)
+            {
+                Oncologie.Colon.ColonPathFollower.Instance.StartColonWalk(playerTransform);
+            }
+            else if (colonController != null)
             {
                 colonController.PlayColonSequence(playerChoice, OnColonSequenceFinished);
             }
@@ -497,7 +523,14 @@ namespace Oncologie.Core
                     AudioManager.Instance.PlayAmbience(false);
                 }
 
-                ShowSubtitle("Darmkanker geeft pas laat klachten. Wacht niet tot het te laat is. Spoel de tijd terug.", 6.0f);
+                if (Oncologie.Dialogue.DialogueManager.Instance != null)
+                {
+                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Einde_Slecht");
+                }
+                else
+                {
+                    ShowSubtitle("Darmkanker geeft pas laat klachten. Wacht niet tot het te laat is. Spoel de tijd terug.", 6.0f);
+                }
             }
             else
             {
@@ -526,7 +559,14 @@ namespace Oncologie.Core
                     AudioManager.Instance.PlayAmbience(true);
                 }
 
-                ShowSubtitle("Vroege opsporing redt levens. De poliep werd tijdig verwijderd. Luc is kerngezond!", 6.0f);
+                if (Oncologie.Dialogue.DialogueManager.Instance != null)
+                {
+                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Einde_Goed");
+                }
+                else
+                {
+                    ShowSubtitle("Vroege opsporing redt levens. De poliep werd tijdig verwijderd. Luc is kerngezond!", 6.0f);
+                }
             }
 
             onOutroReached?.Invoke();
@@ -536,6 +576,16 @@ namespace Oncologie.Core
         {
             StopAllCoroutines();
             EnsureAllReferences();
+
+            if (Oncologie.Colon.ColonPathFollower.Instance != null)
+            {
+                Oncologie.Colon.ColonPathFollower.Instance.StopColonWalk();
+            }
+
+            if (Oncologie.Colon.PolypProgressionManager.Instance != null)
+            {
+                Oncologie.Colon.PolypProgressionManager.Instance.ApplyStage(1);
+            }
 
             if (colonController != null) colonController.ResetVisuals();
 
@@ -556,6 +606,22 @@ namespace Oncologie.Core
                 subtitleText.gameObject.SetActive(true);
             }
 
+            if (Oncologie.Dialogue.SubtitleUI.Instance != null)
+            {
+                string speaker = "Verteller";
+                Color speakerColor = new Color(1f, 0.82f, 0.35f);
+                string body = message;
+                int colonIdx = message.IndexOf(':');
+                if (colonIdx > 0 && colonIdx < 25)
+                {
+                    speaker = message.Substring(0, colonIdx).Trim(' ', '"');
+                    body = message.Substring(colonIdx + 1).Trim(' ', '"');
+                    if (speaker.ToLower().Contains("luc")) speakerColor = new Color(0.35f, 0.78f, 1f);
+                    else if (speaker.ToLower().Contains("jij")) speakerColor = Color.white;
+                }
+                Oncologie.Dialogue.SubtitleUI.Instance.DisplayLine(new Oncologie.Dialogue.DialogueLine(speaker, speakerColor, body, duration));
+            }
+
             if (_subtitleCoroutine != null) StopCoroutine(_subtitleCoroutine);
             _subtitleCoroutine = StartCoroutine(SubtitleRoutine(duration));
         }
@@ -565,6 +631,10 @@ namespace Oncologie.Core
             yield return new WaitForSeconds(duration);
             _currentSubtitle = "";
             if (subtitleText != null) subtitleText.text = "";
+            if (Oncologie.Dialogue.SubtitleUI.Instance != null)
+            {
+                Oncologie.Dialogue.SubtitleUI.Instance.ClearSubtitle();
+            }
         }
 
         private void TeleportPlayer(Vector3 targetPosition, Quaternion targetRotation)
