@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Oncologie.Dialogue;
@@ -7,9 +8,10 @@ using Oncologie.Core;
 namespace Oncologie.Colon
 {
     /// <summary>
-    /// Beheert de vloeiende beweging van de speler/camera langs de 36 darm-waypoints.
-    /// Ondersteunt zowel automatische voortgang (cinematische rondleiding) als handmatige besturing (W/S of thumbstick).
-    /// Triggert de medische vertelling en de kankergroei/resectie op de juiste plekken.
+    /// Cinematische regisseur van de darmwandeling.
+    /// Stuurt de camera/speler langs de 36 waypoints, remt automatisch af en focust
+    /// op de poliep (PolypSpot), regisseert de kankergroei/resectie met dialogen,
+    /// en initieert de zoom-out terug naar de keuken via CinematicTransitionDirector.
     /// </summary>
     public class ColonPathFollower : MonoBehaviour
     {
@@ -18,19 +20,23 @@ namespace Oncologie.Colon
         [Header("Waypoints & Paden")]
         [SerializeField] private Transform pathContainer;
         [SerializeField] private List<Transform> waypoints = new List<Transform>();
+        [SerializeField] private Transform polypFocusTarget;
 
         [Header("Speler Referentie")]
         [SerializeField] private Transform playerRig;
+        [SerializeField] private Camera playerCamera;
 
-        [Header("Voortgang Instellingen")]
+        [Header("Snelheden")]
+        [SerializeField] private float cruiseSpeed = 0.035f;
+        [SerializeField] private float currentSpeed = 0f;
+
+        [Header("Voortgang")]
         [Range(0f, 1f)]
         public float progress = 0f;
-        public float moveSpeed = 0.045f;
-        public bool autoAdvance = true;
+        public bool isInspectingPolyp = false;
 
-        [Header("Status & Triggers")]
         private bool _introTriggered = false;
-        private bool _polypTriggered = false;
+        private bool _polypReached = false;
         private bool _finishTriggered = false;
         private bool _isActive = false;
 
@@ -62,21 +68,31 @@ namespace Oncologie.Colon
                     waypoints.Add(pathContainer.GetChild(i));
                 }
             }
+
+            if (polypFocusTarget == null)
+            {
+                var ps = GameObject.Find("PolypSpot");
+                if (ps != null) polypFocusTarget = ps.transform;
+            }
         }
 
         public void StartColonWalk(Transform player)
         {
             playerRig = player;
-            progress = 0f;
-            _introTriggered = false;
-            _polypTriggered = false;
-            _finishTriggered = false;
-            _isActive = true;
+            if (playerRig != null) playerCamera = playerRig.GetComponentInChildren<Camera>();
 
             var tp = playerRig != null ? playerRig.GetComponent<SampleSceneTestPlayer>() : null;
             if (tp != null) tp.disableMovement = true;
             var cc = playerRig != null ? playerRig.GetComponent<CharacterController>() : null;
             if (cc != null) cc.enabled = false;
+
+            progress = 0f;
+            currentSpeed = cruiseSpeed;
+            _introTriggered = false;
+            _polypReached = false;
+            _finishTriggered = false;
+            isInspectingPolyp = false;
+            _isActive = true;
 
             if (waypoints.Count > 0 && playerRig != null)
             {
@@ -84,7 +100,7 @@ namespace Oncologie.Colon
                 playerRig.rotation = waypoints[0].rotation;
             }
 
-            // Start introductie dialoog
+            // Start medische darm-intro dialoog
             if (DialogueManager.Instance != null)
             {
                 DialogueManager.Instance.PlaySequence("Darm_Intro");
@@ -95,6 +111,8 @@ namespace Oncologie.Colon
         public void StopColonWalk()
         {
             _isActive = false;
+            isInspectingPolyp = false;
+
             var tp = playerRig != null ? playerRig.GetComponent<SampleSceneTestPlayer>() : null;
             if (tp != null) tp.disableMovement = false;
             var cc = playerRig != null ? playerRig.GetComponent<CharacterController>() : null;
@@ -105,27 +123,41 @@ namespace Oncologie.Colon
         {
             if (!_isActive || waypoints.Count < 2 || playerRig == null) return;
 
-            // 1. Handmatige invoer ondersteunen (W/S of pijltjestoetsen)
-            float input = Input.GetAxis("Vertical");
-            if (Mathf.Abs(input) > 0.1f)
+            // Als we bij de poliep stilstaan voor de demonstratie, beweeg niet vooruit
+            if (isInspectingPolyp)
             {
-                progress += input * moveSpeed * 1.5f * Time.deltaTime;
-            }
-            else if (autoAdvance)
-            {
-                progress += moveSpeed * Time.deltaTime;
+                // Richt camera zachtjes op de poliep
+                if (polypFocusTarget != null)
+                {
+                    Vector3 lookDir = (polypFocusTarget.position - playerRig.position).normalized;
+                    Quaternion targetRot = Quaternion.LookRotation(lookDir);
+                    playerRig.rotation = Quaternion.Slerp(playerRig.rotation, targetRot, Time.deltaTime * 2.5f);
+                }
+                return;
             }
 
+            // Automatische voortgang
+            progress += currentSpeed * Time.deltaTime;
             progress = Mathf.Clamp01(progress);
 
-            // 2. Positie & rotatie interpoleren langs de waypoints
-            UpdatePlayerPositionOnPath();
+            UpdatePositionAndRotation();
 
-            // 3. Mijlpaal Triggers
-            CheckMilestones();
+            // Mijlpaal 1: Aankomst bij PolypSpot (~54% van de tunnel)
+            if (progress >= 0.52f && !_polypReached)
+            {
+                _polypReached = true;
+                StartCoroutine(PolypShowcaseRoutine());
+            }
+
+            // Mijlpaal 2: Einde van de darmwandeling (~98% van de tunnel)
+            if (progress >= 0.98f && !_finishTriggered)
+            {
+                _finishTriggered = true;
+                FinishColonTour();
+            }
         }
 
-        private void UpdatePlayerPositionOnPath()
+        private void UpdatePositionAndRotation()
         {
             float totalSegments = waypoints.Count - 1;
             float rawIndex = progress * totalSegments;
@@ -137,84 +169,97 @@ namespace Oncologie.Colon
             Quaternion rot = Quaternion.Slerp(waypoints[idxA].rotation, waypoints[idxB].rotation, segT);
 
             playerRig.position = pos;
-            // Alleen rotatie bijwerken als speler niet zelf vrij rondkijkt, of behoud yaw
-            playerRig.rotation = Quaternion.Slerp(playerRig.rotation, rot, Time.deltaTime * 3f);
+            playerRig.rotation = Quaternion.Slerp(playerRig.rotation, rot, Time.deltaTime * 4f);
         }
 
-        private void CheckMilestones()
+        private IEnumerator PolypShowcaseRoutine()
         {
-            // Mijlpaal 1: Aankomst bij PolypSpot (~55% van het pad)
-            if (progress >= 0.52f && !_polypTriggered)
-            {
-                _polypTriggered = true;
-                TriggerPolypEvent();
-            }
+            isInspectingPolyp = true;
 
-            // Mijlpaal 2: Einde van de darmwandeling (~98% van het pad)
-            if (progress >= 0.98f && !_finishTriggered)
-            {
-                _finishTriggered = true;
-                FinishColonTour();
-            }
-        }
-
-        private void TriggerPolypEvent()
-        {
             ScreeningChoice choice = ExperienceFlowManager.Instance != null 
                 ? ExperienceFlowManager.Instance.GetPlayerChoice() 
                 : ScreeningChoice.IgnoredTrash;
 
             if (choice == ScreeningChoice.InsistedKeys)
             {
-                // Goede Route: Snelle interventie
+                // GOEDE ROUTE: Coloscopie en poliepresectie
                 if (DialogueManager.Instance != null)
                 {
                     DialogueManager.Instance.PlaySequence("Darm_Route_B_Genezing");
                 }
+
+                yield return new WaitForSeconds(1.5f);
+
                 if (PolypProgressionManager.Instance != null)
                 {
                     PolypProgressionManager.Instance.StartPolypRemovalAnimation();
                 }
+
+                // Wacht tot resectie en dialoog rustig klaar zijn
+                yield return new WaitForSeconds(7.0f);
             }
             else
             {
-                // Slechte Route: 3 jaar later, kankergroei
+                // SLECHTE ROUTE: Drie jaar later, mutatie naar kankerstadium 4
                 if (DialogueManager.Instance != null)
                 {
                     DialogueManager.Instance.PlaySequence("Darm_Route_A_Kanker");
                 }
-                if (PolypProgressionManager.Instance != null)
-                {
-                    PolypProgressionManager.Instance.StartCancerGrowthAnimation(2.8f);
-                }
+
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.StartHeartbeat(true);
                 }
+
+                yield return new WaitForSeconds(2.0f);
+
+                if (PolypProgressionManager.Instance != null)
+                {
+                    PolypProgressionManager.Instance.StartCancerGrowthAnimation(2.5f);
+                }
+
+                // Wacht tot alle 4 stadia en uitzaaiing zichtbaar zijn geworden
+                yield return new WaitForSeconds(10.5f);
             }
+
+            // Hervat rustig de tocht naar de uitgang van de tunnel
+            isInspectingPolyp = false;
+            currentSpeed = cruiseSpeed * 1.2f;
         }
 
         private void FinishColonTour()
         {
             _isActive = false;
-            var tp = playerRig != null ? playerRig.GetComponent<SampleSceneTestPlayer>() : null;
-            if (tp != null) tp.disableMovement = false;
-            var cc = playerRig != null ? playerRig.GetComponent<CharacterController>() : null;
-            if (cc != null) cc.enabled = true;
 
             ScreeningChoice choice = ExperienceFlowManager.Instance != null 
                 ? ExperienceFlowManager.Instance.GetPlayerChoice() 
                 : ScreeningChoice.IgnoredTrash;
 
-            if (ExperienceFlowManager.Instance != null)
+            // Start cinematische uitzoom-cutscene terug naar de keuken
+            if (CinematicTransitionDirector.Instance != null)
             {
-                if (choice == ScreeningChoice.InsistedKeys)
+                CinematicTransitionDirector.Instance.PlayZoomOutToKitchenCutscene(() =>
                 {
-                    ExperienceFlowManager.Instance.TeleportToKitchenOutroGood();
-                }
-                else
+                    if (ExperienceFlowManager.Instance != null)
+                    {
+                        if (choice == ScreeningChoice.InsistedKeys)
+                        {
+                            ExperienceFlowManager.Instance.TeleportToKitchenOutroGood();
+                        }
+                        else
+                        {
+                            ExperienceFlowManager.Instance.TeleportToKitchenOutroBad();
+                        }
+                    }
+                });
+            }
+            else
+            {
+                // Direct fallback
+                if (ExperienceFlowManager.Instance != null)
                 {
-                    ExperienceFlowManager.Instance.TeleportToKitchenOutroBad();
+                    if (choice == ScreeningChoice.InsistedKeys) ExperienceFlowManager.Instance.TeleportToKitchenOutroGood();
+                    else ExperienceFlowManager.Instance.TeleportToKitchenOutroBad();
                 }
             }
         }

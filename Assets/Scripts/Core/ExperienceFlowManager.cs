@@ -318,24 +318,29 @@ namespace Oncologie.Core
                 }
             }
 
-            StartCoroutine(TransitionToColonRoutine());
+            StartCoroutine(StartCinematicTransitionToColon());
         }
 
-        private IEnumerator TransitionToColonRoutine()
+        private IEnumerator StartCinematicTransitionToColon()
         {
-            yield return new WaitForSeconds(3.0f);
+            // Laat de keuze dialoog 2.5 seconden bezinken
+            yield return new WaitForSeconds(2.5f);
 
             currentState = ExperienceState.TransitionToColon;
 
-            if (AudioManager.Instance != null)
+            if (CinematicTransitionDirector.Instance != null)
             {
-                AudioManager.Instance.PlayWhoosh();
+                CinematicTransitionDirector.Instance.PlayShrinkToColonCutscene(() =>
+                {
+                    TeleportToDarmStart();
+                });
             }
-            ShowSubtitle("Je krimpt naar het microniveau... Binnenin de dikke darm van je vader.", 2.5f);
-
-            yield return new WaitForSeconds(2.0f);
-
-            TeleportToDarmStart();
+            else
+            {
+                if (AudioManager.Instance != null) AudioManager.Instance.PlayWhoosh();
+                yield return new WaitForSeconds(1.5f);
+                TeleportToDarmStart();
+            }
         }
 
         // ==========================================
