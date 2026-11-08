@@ -1,12 +1,12 @@
 using UnityEngine;
-using UnityEngine.Rendering.Universal; // Nodig om Post-Processing voor Zwart-Wit aan te zetten
+using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class SampleSceneTestPlayer : MonoBehaviour
 {
     [Header("Beweging & Kijken")]
     [SerializeField] private float movementSpeed = 2.5f;
-    [SerializeField] private float mouseSensitivity = 2.0f; // Iets verhoogd voor soepel testen
+    [SerializeField] private float mouseSensitivity = 2.0f;
     [SerializeField] private float gravity = -9.81f;
 
     [Header("Interactie (Linkermuisknop om op te pakken)")]
@@ -27,19 +27,28 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
         characterController.radius = 0.2f;
         characterController.center = new Vector3(0f, 0.9f, 0f);
 
-        var cameraObject = new GameObject("Player Camera");
-        cameraObject.tag = "MainCamera"; // CRUCIAAL: Zo vindt GazeTrigger jouw Camera.main!
-        cameraObject.transform.SetParent(transform, false);
-        cameraObject.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+        // Zoek of er al een camera is
+        Camera existingCam = GetComponentInChildren<Camera>();
+        if (existingCam != null)
+        {
+            camComponent = existingCam;
+            playerCamera = existingCam.transform;
+        }
+        else
+        {
+            var cameraObject = new GameObject("Player Camera");
+            cameraObject.tag = "MainCamera";
+            cameraObject.transform.SetParent(transform, false);
+            cameraObject.transform.localPosition = new Vector3(0f, 1.6f, 0f);
 
-        camComponent = cameraObject.AddComponent<Camera>();
-        cameraObject.AddComponent<AudioListener>();
+            camComponent = cameraObject.AddComponent<Camera>();
+            cameraObject.AddComponent<AudioListener>();
 
-        // Zet Post-Processing automatisch aan op deze nieuwe camera (voor GreyscaleTransition)
-        var cameraData = cameraObject.AddComponent<UniversalAdditionalCameraData>();
-        cameraData.renderPostProcessing = true;
+            var cameraData = cameraObject.AddComponent<UniversalAdditionalCameraData>();
+            cameraData.renderPostProcessing = true;
 
-        playerCamera = cameraObject.transform;
+            playerCamera = cameraObject.transform;
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -47,9 +56,52 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Toggle muiscursor met Escape (handig voor UI klikken in desktop testmodus)
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
         HandleMovement();
-        HandleLook();
+
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            HandleLook();
+        }
+
         HandleGrabbing();
+    }
+
+    public void Teleport(Vector3 targetPos, Quaternion targetRot)
+    {
+        if (grabbedRigidbody != null)
+        {
+            grabbedRigidbody.useGravity = true;
+            grabbedRigidbody = null;
+        }
+
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        verticalVelocity = 0f;
+        transform.position = targetPos;
+        transform.rotation = targetRot;
+
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+        }
     }
 
     private void HandleMovement()
@@ -78,27 +130,36 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
 
     private void HandleGrabbing()
     {
-        // Klik met linkermuisknop om de envelop of zaklamp op te pakken
+        // Klik met linkermuisknop om object op te pakken
         if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = new Ray(playerCamera.position, playerCamera.forward);
+            Ray ray = camComponent.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            if (Cursor.lockState == CursorLockMode.None)
+            {
+                ray = camComponent.ScreenPointToRay(Input.mousePosition);
+            }
+
             if (Physics.Raycast(ray, out RaycastHit hit, grabRange))
             {
                 if (hit.rigidbody != null)
                 {
                     grabbedRigidbody = hit.rigidbody;
                     grabbedRigidbody.useGravity = false;
+
+                    var kit = grabbedRigidbody.GetComponent<Oncologie.Core.ScreeningKitInteraction>();
+                    if (kit != null) kit.OnPickedUp();
                 }
             }
         }
 
-        // Laat linkermuisknop los om het object los te laten
+        // Laat los
         if (Input.GetMouseButtonUp(0) && grabbedRigidbody != null)
         {
+            grabbedRigidbody.useGravity = true;
             grabbedRigidbody = null;
         }
 
-        // Houd het opgepakte object recht voor je camera
+        // Beweeg opgepakt object mee
         if (grabbedRigidbody != null)
         {
             Vector3 targetPos = playerCamera.position + playerCamera.forward * holdDistance;

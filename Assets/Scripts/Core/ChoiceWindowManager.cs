@@ -1,10 +1,11 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using Oncologie.Core;
 
 public class ChoiceWindowManager : MonoBehaviour
 {
-    [Header("Instellingen Keuzevenster (Scène 4)")]
+    [Header("Instellingen Keuzevenster")]
     [Tooltip("Duur van het zingen waarin de speler kan ingrijpen (standaard 20s).")]
     [SerializeField] private float choiceDuration = 20f;
 
@@ -14,6 +15,15 @@ public class ChoiceWindowManager : MonoBehaviour
 
     private bool _choiceMade = false;
     private Coroutine _timerCoroutine;
+
+    private void Awake()
+    {
+        // Zorg ervoor dat het volledige ExperienceBootstrap systeem meedraait!
+        if (GetComponent<ExperienceBootstrap>() == null)
+        {
+            gameObject.AddComponent<ExperienceBootstrap>();
+        }
+    }
 
     // Start dit zodra Mama en Luc beginnen te zingen in Scène 4
     public void StartChoiceWindow()
@@ -38,6 +48,11 @@ public class ChoiceWindowManager : MonoBehaviour
         {
             _choiceMade = true;
             onBranchA_DidNothing?.Invoke();
+
+            if (ExperienceFlowManager.Instance != null)
+            {
+                ExperienceFlowManager.Instance.MakeChoice(ScreeningChoice.IgnoredTrash);
+            }
         }
     }
 
@@ -49,5 +64,10 @@ public class ChoiceWindowManager : MonoBehaviour
         _choiceMade = true;
         if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
         onBranchB_EnvelopeGiven?.Invoke();
+
+        if (ExperienceFlowManager.Instance != null)
+        {
+            ExperienceFlowManager.Instance.MakeChoice(ScreeningChoice.InsistedKeys);
+        }
     }
 }
