@@ -79,7 +79,7 @@ namespace Oncologie.Core
                 onDeliveredTrash?.Invoke();
             }
             // Check Optie B: Aan vader Luc geven
-            else if (targetName.Contains(dadZoneIdentifier) || targetTag.Contains(dadZoneIdentifier) || targetName.Contains("Dad") || targetName.Contains("Hand") || targetName.Contains("Father"))
+            else if (targetName.Contains(dadZoneIdentifier) || targetTag.Contains(dadZoneIdentifier) || targetName.Contains("Dad") || targetName.Contains("Hand") || targetName.Contains("Father") || targetName.Contains("Luc"))
             {
                 DeliverChoice(ScreeningChoice.InsistedKeys);
                 onDeliveredKeys?.Invoke();

@@ -28,7 +28,7 @@ namespace Oncologie.Core
         [Tooltip("Luc: 'Allee vooruit, omdat jij zo aandringt. Morgenochtend doe ik hem meteen.'")]
         public AudioClip voiceLucKeys;
 
-        [Tooltip("Luc na 25s aarzeling: 'Leg maar bij het oud papier jongen, of leg hem bij mijn sleutels...'")]
+        [Tooltip("Luc na 25s aarzeling: 'Leg maar bij het oud papier jongen, of geef hem aan mij...'")]
         public AudioClip voiceLucReminder;
 
         [Header("--- VOICE OVERS: ARTS / GIDS IN DARM ---")]

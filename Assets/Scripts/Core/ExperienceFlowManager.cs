@@ -63,6 +63,7 @@ namespace Oncologie.Core
         [SerializeField] private RawImage outroCardImage;
         [SerializeField] private Texture2D goodEndingCardTexture;
         [SerializeField] private Texture2D badEndingCardTexture;
+        [SerializeField] private GameObject rewindSystem;
 
         [Header("Events")]
         public UnityEvent onExperienceStarted;
@@ -161,6 +162,25 @@ namespace Oncologie.Core
                     colonController = colonEnvironment.AddComponent<ColonExperienceController>();
                 }
             }
+
+            // 7. Rewind System
+            if (rewindSystem == null)
+            {
+                var rw = GameObject.Find("Rewind_System");
+                if (rw != null) rewindSystem = rw;
+                else
+                {
+                    var sceneRoots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                    foreach (var r in sceneRoots)
+                    {
+                        if (r.name == "Rewind_System" || r.name == "Rewind_Clock_Object")
+                        {
+                            rewindSystem = r;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         private void Update()
@@ -209,6 +229,7 @@ namespace Oncologie.Core
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(true);
             if (colonEnvironment != null) colonEnvironment.SetActive(false);
             if (outroPanel != null) outroPanel.SetActive(false);
+            if (rewindSystem != null) rewindSystem.SetActive(false);
 
             if (fatherCharacter != null)
             {
@@ -247,8 +268,17 @@ namespace Oncologie.Core
 
             // Reset brief positie op tafel
             var env = GameObject.Find("envelope");
+            if (env == null)
+            {
+                var sceneRoots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                foreach (var r in sceneRoots)
+                {
+                    if (r.name == "envelope") { env = r; break; }
+                }
+            }
             if (env != null)
             {
+                env.SetActive(true);
                 var kit = env.GetComponent<ScreeningKitInteraction>();
                 if (kit != null) kit.ResetPosition();
                 else
@@ -354,6 +384,7 @@ namespace Oncologie.Core
 
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
+            if (rewindSystem != null) rewindSystem.SetActive(false);
 
             if (playerChoice == ScreeningChoice.None) playerChoice = ScreeningChoice.IgnoredTrash;
 
@@ -390,16 +421,31 @@ namespace Oncologie.Core
 
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
+            if (rewindSystem != null) rewindSystem.SetActive(false);
 
-            TeleportPlayer(new Vector3(0.1f, -48.0f, 11.0f), Quaternion.identity);
+            // Checkpoint 1: Speler staat op de darmvloer recht voor de poliep
+            Vector3 polypFloorPos = new Vector3(-21.36f, -54.20f, 16.04f);
+            Quaternion lookRot = Quaternion.Euler(0f, 323.0f, 0f);
+            TeleportPlayer(polypFloorPos, lookRot);
+
+            var testPlayer = playerTransform != null ? playerTransform.GetComponent<SampleSceneTestPlayer>() : null;
+            if (testPlayer != null) testPlayer.disableMovement = false;
+            var charCtrl = playerTransform != null ? playerTransform.GetComponent<CharacterController>() : null;
+            if (charCtrl != null) charCtrl.enabled = true;
 
             currentState = ExperienceState.ColonDarmwandeling;
-            if (colonController != null)
+
+            if (Oncologie.Colon.PolypProgressionManager.Instance != null)
             {
-                colonController.ResetVisuals();
+                Oncologie.Colon.PolypProgressionManager.Instance.ApplyStage(1);
             }
 
-            ShowSubtitle("Arts: \"Kijk hier op de darmwand: dit is een goedaardige poliep (adenoom). Geen pijn, maar de test vindt het!\"", 5.0f);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopHeartbeat();
+            }
+
+            ShowSubtitle("Dr. Verteller: \"Kijk hier rechts op de darmwand: dit is een goedaardige poliep (adenoom). De test vindt dit direct!\"", 5.5f);
         }
 
         public void TeleportToDarmTumor()
@@ -411,21 +457,31 @@ namespace Oncologie.Core
 
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
+            if (rewindSystem != null) rewindSystem.SetActive(false);
 
-            TeleportPlayer(new Vector3(0.1f, -48.0f, 15.0f), Quaternion.identity);
+            // Checkpoint 2: Speler staat op de darmvloer recht voor het gevorderde carcinoom
+            Vector3 polypFloorPos = new Vector3(-21.36f, -54.20f, 16.04f);
+            Quaternion lookRot = Quaternion.Euler(0f, 323.0f, 0f);
+            TeleportPlayer(polypFloorPos, lookRot);
+
+            var testPlayer = playerTransform != null ? playerTransform.GetComponent<SampleSceneTestPlayer>() : null;
+            if (testPlayer != null) testPlayer.disableMovement = false;
+            var charCtrl = playerTransform != null ? playerTransform.GetComponent<CharacterController>() : null;
+            if (charCtrl != null) charCtrl.enabled = true;
 
             currentState = ExperienceState.ColonDarmwandeling;
-            if (colonController != null)
+
+            if (Oncologie.Colon.PolypProgressionManager.Instance != null)
             {
-                colonController.ResetVisuals();
-                var p = GameObject.Find("Benign_Polyp");
-                if (p != null) p.SetActive(false);
-                var c = GameObject.Find("cancer 1");
-                if (c != null) { c.SetActive(true); c.transform.localScale = Vector3.one * 0.9f; }
+                Oncologie.Colon.PolypProgressionManager.Instance.ApplyStage(4);
             }
 
-            if (AudioManager.Instance != null) AudioManager.Instance.StartHeartbeat(true);
-            ShowSubtitle("Arts: \"3 JAAR LATER: De poliep is uitgegroeid tot een kwaadaardige tumor die door de wand breekt!\"", 5.0f);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StartHeartbeat(true);
+            }
+
+            ShowSubtitle("Dr. Verteller: \"Fase 4 (Invasief Carcinoom): 3 jaar later is de poliep doorgegroeid in de darmwand en bloedvaten!\"", 6.0f);
         }
 
         public void TeleportToDarmSnare()
@@ -437,19 +493,33 @@ namespace Oncologie.Core
 
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
+            if (rewindSystem != null) rewindSystem.SetActive(false);
 
-            TeleportPlayer(new Vector3(0.1f, -48.0f, 11.2f), Quaternion.identity);
+            // Checkpoint 3: Resectie met medische lus
+            Vector3 polypFloorPos = new Vector3(-21.36f, -54.20f, 16.04f);
+            Quaternion lookRot = Quaternion.Euler(0f, 323.0f, 0f);
+            TeleportPlayer(polypFloorPos, lookRot);
+
+            var testPlayer = playerTransform != null ? playerTransform.GetComponent<SampleSceneTestPlayer>() : null;
+            if (testPlayer != null) testPlayer.disableMovement = false;
+            var charCtrl = playerTransform != null ? playerTransform.GetComponent<CharacterController>() : null;
+            if (charCtrl != null) charCtrl.enabled = true;
 
             currentState = ExperienceState.ColonDarmwandeling;
-            if (colonController != null)
+
+            if (Oncologie.Colon.PolypProgressionManager.Instance != null)
             {
-                colonController.ResetVisuals();
-                var s = GameObject.Find("Colonoscope_Snare");
-                if (s != null) s.SetActive(true);
+                Oncologie.Colon.PolypProgressionManager.Instance.ApplyStage(1);
+                Oncologie.Colon.PolypProgressionManager.Instance.StartPolypRemovalAnimation();
             }
 
-            if (AudioManager.Instance != null) AudioManager.Instance.PlaySnareSnip();
-            ShowSubtitle("Arts: \"Een medische lus verwijdert de poliep pijnloos. Vader Luc is genezen!\"", 5.0f);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.StopHeartbeat();
+                AudioManager.Instance.PlaySnareSnip();
+            }
+
+            ShowSubtitle("Dr. Verteller: \"Coloscopie Interventie: Met een medische lus wordt de poliep pijnloos weggenomen. Vader Luc is genezen!\"", 5.5f);
         }
 
         private void OnColonSequenceFinished()
@@ -510,6 +580,11 @@ namespace Oncologie.Core
         {
             EnsureAllReferences();
             if (outroPanel != null) outroPanel.SetActive(true);
+            if (rewindSystem != null) rewindSystem.SetActive(true);
+
+            // Verberg de envelop tijdens het einde (die is jaren geleden al verzonden/weggegooid)
+            var env = GameObject.Find("envelope");
+            if (env != null) env.SetActive(false);
 
             if (choice == ScreeningChoice.IgnoredTrash)
             {
@@ -536,6 +611,17 @@ namespace Oncologie.Core
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlayAmbience(false);
+                }
+
+                // Pas tekst op 3D kaart aan voor slecht einde
+                if (rewindSystem != null)
+                {
+                    var sub = rewindSystem.transform.Find("Rewind_Card_Canvas/Subtitle_Text");
+                    if (sub != null)
+                    {
+                        var t = sub.GetComponent<UnityEngine.UI.Text>();
+                        if (t != null) t.text = "Darmkanker geeft pas laat merkbare klachten.\nWachten kost levens. Vroege opsporing redt levens!";
+                    }
                 }
 
                 if (Oncologie.Dialogue.DialogueManager.Instance != null)
@@ -572,6 +658,17 @@ namespace Oncologie.Core
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlayAmbience(true);
+                }
+
+                // Pas tekst op 3D kaart aan voor goed einde
+                if (rewindSystem != null)
+                {
+                    var sub = rewindSystem.transform.Find("Rewind_Card_Canvas/Subtitle_Text");
+                    if (sub != null)
+                    {
+                        var t = sub.GetComponent<UnityEngine.UI.Text>();
+                        if (t != null) t.text = "Geweldig gedaan! Dankzij jouw aandringen werd de poliep op tijd gevonden.\nVader Luc is kankervrij en kerngezond!";
+                    }
                 }
 
                 if (Oncologie.Dialogue.DialogueManager.Instance != null)
@@ -698,28 +795,44 @@ namespace Oncologie.Core
             {
                 GUI.skin.box.fontSize = 13;
                 GUI.backgroundColor = new Color(0.15f, 0.15f, 0.2f, 0.75f);
-                Rect hintRect = new Rect((Screen.width - 480f) / 2f, Screen.height - 130f, 480f, 32f);
-                GUI.Box(hintRect, "<b>[Linkermuisknop ingedrukt]</b> Pak brief op ➜ Prullenmand (A) of Vader (B)");
+                Rect hintRect = new Rect((Screen.width - 500f) / 2f, Screen.height - 130f, 500f, 32f);
+                GUI.Box(hintRect, "<b>[Linkermuisknop ingedrukt]</b> Pak brief op ➜ Oud papier (A) of Vader Luc (B)");
             }
 
-            // 3. Complete Quick-Test HUD voor elke scène
+            // 3. Grote prominente rewind knop tijdens het einde
+            if (currentState == ExperienceState.KitchenOutro)
+            {
+                GUI.skin.button.fontSize = 16;
+                GUI.backgroundColor = new Color(0.96f, 0.76f, 0.20f, 0.95f);
+                float btnWidth = 520f;
+                float btnHeight = 52f;
+                Rect rewindBtnRect = new Rect((Screen.width - btnWidth) / 2f, Screen.height - 150f, btnWidth, btnHeight);
+                if (GUI.Button(rewindBtnRect, "<b>↺ TIJD TERUGSPOELEN (Druk op 'R' of Klik Hier)</b>"))
+                {
+                    RewindTime();
+                }
+            }
+
+            // 4. Complete Quick-Test HUD voor elke scène
             if (_showDebugMenu)
             {
-                GUILayout.BeginArea(new Rect(15, 15, 270, 420), GUI.skin.box);
+                GUI.skin.button.fontSize = 12;
+                GUI.skin.box.fontSize = 12;
+                GUILayout.BeginArea(new Rect(15, 15, 280, 440), GUI.skin.box);
                 GUILayout.Label($"<b>ONCOLOGIE TEST CONTROLLER</b>\nFase: <color=yellow>{currentState}</color>");
 
                 GUILayout.Space(3);
                 GUILayout.Label("<b>--- 1. Keuken & Keuze ---</b>");
                 if (GUILayout.Button("Keuken: Start / Intro")) StartKitchenIntro();
                 if (GUILayout.Button("Optie A: In Prullenmand (Negeren)")) MakeChoice(ScreeningChoice.IgnoredTrash);
-                if (GUILayout.Button("Optie B: Aan Vader Geven (Aandringen)")) MakeChoice(ScreeningChoice.InsistedKeys);
+                if (GUILayout.Button("Optie B: Aan Vader Luc Geven (Aandringen)")) MakeChoice(ScreeningChoice.InsistedKeys);
 
                 GUILayout.Space(3);
                 GUILayout.Label("<b>--- 2. Darmwandeling Scènes ---</b>");
-                if (GUILayout.Button("Darm: Start (Z = 8.5m)")) TeleportToDarmStart();
-                if (GUILayout.Button("Darm: Poliep (Checkpoint 1)")) TeleportToDarmPolyp();
-                if (GUILayout.Button("Darm: Slecht - Tumor (Checkpoint 2)")) TeleportToDarmTumor();
-                if (GUILayout.Button("Darm: Goed - Lisverwijdering")) TeleportToDarmSnare();
+                if (GUILayout.Button("Darm: Start (Vrije Wandeling)")) TeleportToDarmStart();
+                if (GUILayout.Button("Darm: Fase 1 (Adenoom Poliep)")) TeleportToDarmPolyp();
+                if (GUILayout.Button("Darm: Fase 4 (Kanker & Uitzaaiing)")) TeleportToDarmTumor();
+                if (GUILayout.Button("Darm: Coloscopie Lis-resectie")) TeleportToDarmSnare();
 
                 GUILayout.Space(3);
                 GUILayout.Label("<b>--- 3. Keuken Eindes ---</b>");

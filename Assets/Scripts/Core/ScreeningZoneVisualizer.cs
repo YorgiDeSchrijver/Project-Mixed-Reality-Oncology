@@ -4,7 +4,7 @@ namespace Oncologie.Core
 {
     /// <summary>
     /// Toont duidelijke visuele indicators en 3D zwevende labels boven de twee keuzelocaties
-    /// (Oud papier vs Sleutels op tafel), zodat niet-technische testers en ouderen direct begrijpen wat ze moeten doen!
+    /// (Oud papier vs Aan Vader Luc geven), zodat niet-technische testers en ouderen direct begrijpen wat ze moeten doen!
     /// </summary>
     public class ScreeningZoneVisualizer : MonoBehaviour
     {
@@ -36,8 +36,8 @@ namespace Oncologie.Core
             }
             else
             {
-                labelTitle = "ZONE B: BIJ SLEUTELS";
-                labelSub = "[ Aandringen / Doen ]";
+                labelTitle = "ZONE B: AAN VADER LUC";
+                labelSub = "[ Aandringen op de test ]";
                 zoneColor = new Color(0.3f, 0.95f, 0.5f, 0.9f);
             }
         }

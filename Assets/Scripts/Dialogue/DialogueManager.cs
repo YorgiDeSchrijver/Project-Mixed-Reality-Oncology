@@ -169,8 +169,8 @@ namespace Oncologie.Dialogue
             intro.lines.Add(new DialogueLine("Vader Luc (58)", lucColor, "Zo, de koffie pruttelt. Gezellig dat je er bent vandaag!", 3.5f));
             intro.lines.Add(new DialogueLine("Vader Luc (58)", lucColor, "Kijk, er lag vanochtend weer zo'n paarse brief van het Bevolkingsonderzoek op de mat.", 4.5f));
             intro.lines.Add(new DialogueLine("Vader Luc (58)", lucColor, "Ach joh, ik ben pas 58 en kerngezond. Die test doe ik volgend jaar wel.", 4.5f));
-            intro.lines.Add(new DialogueLine("Vader Luc (58)", lucColor, "Ik ga even de hond uitlaten. Leg die envelop maar ergens neer.", 4.0f));
-            intro.lines.Add(new DialogueLine("Jij (Perspectief)", playerColor, "Wat doe je met de brief? Leg je hem bij het oud papier (A), of leg je hem bij zijn autosleutels (B)?", 5.0f));
+            intro.lines.Add(new DialogueLine("Vader Luc (58)", lucColor, "Ik drink rustig even mijn koffie op. Leg die envelop maar ergens neer.", 4.0f));
+            intro.lines.Add(new DialogueLine("Jij (Perspectief)", playerColor, "Wat doe je met de brief? Gooi je hem bij het oud papier (A), of overhandig je hem direct aan vader Luc (B)?", 5.0f));
             sequences.Add(intro);
 
             // 2. KEUZE A: GENEGEERD
@@ -180,7 +180,7 @@ namespace Oncologie.Dialogue
             sequences.Add(choiceA);
 
             // 3. KEUZE B: AANGEDRONGEN
-            var choiceB = new DialogueSequence("Keuze_B_Aandringen", "Brief bij autosleutels gelegd");
+            var choiceB = new DialogueSequence("Keuze_B_Aandringen", "Brief aan vader Luc overhandigd (Aandringen)");
             choiceB.lines.Add(new DialogueLine("Jij (Perspectief)", playerColor, "Nee pap, 58 is precies de doelgroep. Geen uitstel meer, doe deze test.", 4.0f));
             choiceB.lines.Add(new DialogueLine("Vader Luc (58)", lucColor, "Nou vooruit dan maar... omdat jij zo aandringt. Ik stuur de test vanavond nog op.", 4.0f));
             choiceB.lines.Add(new DialogueLine("Dr. Verteller", docColor, "De testkit wordt verzonden naar het laboratorium voor analyse.", 3.5f));
