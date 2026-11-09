@@ -95,16 +95,24 @@ namespace Oncologie.Core
 
         public void EnsureAllReferences()
         {
-            // 1. Speler transform
-            if (playerTransform == null)
+            // 1. Speler transform (ondersteunt zowel XR Origin VR Rig als Test Player)
+            if (playerTransform == null || !playerTransform.gameObject.activeInHierarchy)
             {
-                var player = FindAnyObjectByType<SampleSceneTestPlayer>();
-                if (player != null) playerTransform = player.transform;
+                var xr = FindAnyObjectByType<Unity.XR.CoreUtils.XROrigin>();
+                if (xr != null && xr.gameObject.activeInHierarchy)
+                {
+                    playerTransform = xr.transform;
+                }
                 else
                 {
-                    var pGO = GameObject.Find("Test Player");
-                    if (pGO != null) playerTransform = pGO.transform;
-                    else if (Camera.main != null) playerTransform = Camera.main.transform;
+                    var player = FindAnyObjectByType<SampleSceneTestPlayer>();
+                    if (player != null && player.gameObject.activeInHierarchy) playerTransform = player.transform;
+                    else
+                    {
+                        var pGO = GameObject.Find("Test Player");
+                        if (pGO != null && pGO.activeInHierarchy) playerTransform = pGO.transform;
+                        else if (Camera.main != null) playerTransform = Camera.main.transform;
+                    }
                 }
             }
 

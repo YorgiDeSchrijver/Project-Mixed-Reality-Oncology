@@ -45,11 +45,16 @@ namespace Oncologie.Colon
 
         public void EnsureReferences()
         {
-            if (playerTransform == null)
+            if (playerTransform == null || !playerTransform.gameObject.activeInHierarchy)
             {
-                var p = GameObject.Find("Test Player");
-                if (p != null) playerTransform = p.transform;
-                else if (Camera.main != null) playerTransform = Camera.main.transform;
+                var xr = FindAnyObjectByType<Unity.XR.CoreUtils.XROrigin>();
+                if (xr != null && xr.gameObject.activeInHierarchy) playerTransform = xr.transform;
+                else
+                {
+                    var p = GameObject.Find("Test Player");
+                    if (p != null && p.activeInHierarchy) playerTransform = p.transform;
+                    else if (Camera.main != null) playerTransform = Camera.main.transform;
+                }
             }
 
             if (polypSpot == null)

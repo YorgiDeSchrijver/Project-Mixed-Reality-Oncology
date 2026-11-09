@@ -37,6 +37,13 @@ namespace Oncologie.Core
         private void Start()
         {
             ResetPosition();
+
+            // Automatische integratie met XR Interaction Toolkit (VR controllers)
+            var grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            if (grab != null)
+            {
+                grab.selectEntered.AddListener((args) => OnPickedUp());
+            }
         }
 
         public void OnPickedUp()

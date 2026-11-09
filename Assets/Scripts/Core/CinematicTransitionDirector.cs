@@ -53,9 +53,17 @@ namespace Oncologie.Core
             if (playerCamera == null) playerCamera = Camera.main;
             if (playerTransform == null && playerCamera != null)
             {
-                var tp = playerCamera.GetComponentInParent<SampleSceneTestPlayer>();
-                if (tp != null) playerTransform = tp.transform;
-                else playerTransform = playerCamera.transform;
+                var xr = playerCamera.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>();
+                if (xr != null && xr.gameObject.activeInHierarchy)
+                {
+                    playerTransform = xr.transform;
+                }
+                else
+                {
+                    var tp = playerCamera.GetComponentInParent<SampleSceneTestPlayer>();
+                    if (tp != null && tp.gameObject.activeInHierarchy) playerTransform = tp.transform;
+                    else playerTransform = playerCamera.transform;
+                }
             }
 
             if (fatherAbdomenTarget == null)

@@ -22,6 +22,13 @@ namespace Oncologie.Interaction
         private void Start()
         {
             _basePos = transform.position;
+
+            // Ondersteuning voor VR Controller Ray / Direct Poke select
+            var interactable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable>();
+            if (interactable != null)
+            {
+                interactable.selectEntered.AddListener((args) => TriggerRewind());
+            }
         }
 
         private void Update()
