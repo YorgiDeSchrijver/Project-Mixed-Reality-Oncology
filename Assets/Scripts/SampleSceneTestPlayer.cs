@@ -24,11 +24,18 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-        if (characterController.height <= 0f)
+        if (characterController != null)
         {
-            characterController.height = 1.8f;
-            characterController.radius = 0.25f;
-            characterController.center = new Vector3(0f, 0.9f, 0f);
+            if (characterController.height <= 0f)
+            {
+                characterController.height = 1.8f;
+                characterController.radius = 0.25f;
+                characterController.center = new Vector3(0f, 0.9f, 0f);
+            }
+            characterController.stepOffset = 0.5f;
+            characterController.slopeLimit = 60f;
+            characterController.skinWidth = 0.03f;
+            characterController.minMoveDistance = 0.001f;
         }
 
         // Zoek of er al een camera is
@@ -114,18 +121,21 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
 
     private void HandleMovement()
     {
-        var moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        var movement = (transform.right * moveInput.x + transform.forward * moveInput.y).normalized;
+        var moveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        var moveDir = (transform.right * moveInput.x + transform.forward * moveInput.y);
+        if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
 
         if (characterController.isGrounded && verticalVelocity < 0f)
-            verticalVelocity = -2f;
+            verticalVelocity = -4f; // Stevige grondklemming voor darmvloer naden
 
         if (characterController.isGrounded && Input.GetButtonDown("Jump"))
-            verticalVelocity = 4f;
+            verticalVelocity = 5f;
 
         verticalVelocity += gravity * Time.deltaTime;
-        movement.y = verticalVelocity;
-        characterController.Move(movement * movementSpeed * Time.deltaTime);
+
+        Vector3 moveVelocity = moveDir * movementSpeed;
+        moveVelocity.y = verticalVelocity;
+        characterController.Move(moveVelocity * Time.deltaTime);
     }
 
     private void HandleLook()

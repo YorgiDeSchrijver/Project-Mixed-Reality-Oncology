@@ -238,6 +238,7 @@ namespace Oncologie.Core
             if (colonEnvironment != null) colonEnvironment.SetActive(false);
             if (outroPanel != null) outroPanel.SetActive(false);
             if (rewindSystem != null) rewindSystem.SetActive(false);
+            ApplyEnvironmentLighting(false);
 
             if (fatherCharacter != null)
             {
@@ -393,6 +394,8 @@ namespace Oncologie.Core
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
             if (rewindSystem != null) rewindSystem.SetActive(false);
+            ApplyEnvironmentLighting(true);
+            ApplyEnvironmentLighting(true);
 
             if (playerChoice == ScreeningChoice.None) playerChoice = ScreeningChoice.IgnoredTrash;
 
@@ -430,6 +433,7 @@ namespace Oncologie.Core
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
             if (rewindSystem != null) rewindSystem.SetActive(false);
+            ApplyEnvironmentLighting(true);
 
             // Checkpoint 1: Speler staat op de darmvloer recht voor de poliep
             Vector3 polypFloorPos = new Vector3(-21.36f, -54.20f, 16.04f);
@@ -466,6 +470,7 @@ namespace Oncologie.Core
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
             if (rewindSystem != null) rewindSystem.SetActive(false);
+            ApplyEnvironmentLighting(true);
 
             // Checkpoint 2: Speler staat op de darmvloer recht voor het gevorderde carcinoom
             Vector3 polypFloorPos = new Vector3(-21.36f, -54.20f, 16.04f);
@@ -502,6 +507,7 @@ namespace Oncologie.Core
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(false);
             if (colonEnvironment != null) colonEnvironment.SetActive(true);
             if (rewindSystem != null) rewindSystem.SetActive(false);
+            ApplyEnvironmentLighting(true);
 
             // Checkpoint 3: Resectie met medische lus
             Vector3 polypFloorPos = new Vector3(-21.36f, -54.20f, 16.04f);
@@ -560,6 +566,7 @@ namespace Oncologie.Core
 
             if (colonEnvironment != null) colonEnvironment.SetActive(false);
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(true);
+            ApplyEnvironmentLighting(false);
 
             Vector3 kPos = kitchenPlayerAnchor != null ? kitchenPlayerAnchor.position : new Vector3(-0.41f, 0f, -0.6f);
             TeleportPlayer(kPos, Quaternion.identity);
@@ -577,6 +584,7 @@ namespace Oncologie.Core
 
             if (colonEnvironment != null) colonEnvironment.SetActive(false);
             if (kitchenEnvironment != null) kitchenEnvironment.SetActive(true);
+            ApplyEnvironmentLighting(false);
 
             Vector3 kPos = kitchenPlayerAnchor != null ? kitchenPlayerAnchor.position : new Vector3(-0.41f, 0f, -0.6f);
             TeleportPlayer(kPos, Quaternion.identity);
@@ -754,6 +762,37 @@ namespace Oncologie.Core
             if (Oncologie.Dialogue.SubtitleUI.Instance != null)
             {
                 Oncologie.Dialogue.SubtitleUI.Instance.ClearSubtitle();
+            }
+        }
+
+        private void ApplyEnvironmentLighting(bool inColon)
+        {
+            if (inColon)
+            {
+                if (kitchenDirectionalLight != null) kitchenDirectionalLight.enabled = false;
+                RenderSettings.fog = true;
+                RenderSettings.fogColor = Color.black;
+                RenderSettings.fogDensity = 0.035f;
+                var cam = Camera.main;
+                if (cam != null)
+                {
+                    cam.clearFlags = CameraClearFlags.SolidColor;
+                    cam.backgroundColor = Color.black;
+                }
+            }
+            else
+            {
+                if (kitchenDirectionalLight != null)
+                {
+                    kitchenDirectionalLight.enabled = true;
+                    kitchenDirectionalLight.color = warmSunlightColor;
+                }
+                RenderSettings.fog = false;
+                var cam = Camera.main;
+                if (cam != null)
+                {
+                    cam.clearFlags = CameraClearFlags.Skybox;
+                }
             }
         }
 
