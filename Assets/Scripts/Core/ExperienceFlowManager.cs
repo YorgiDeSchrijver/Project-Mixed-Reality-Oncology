@@ -32,6 +32,8 @@ namespace Oncologie.Core
         [Header("Huidige Status")]
         [SerializeField] private ExperienceState currentState = ExperienceState.KitchenIntro;
         [SerializeField] private ScreeningChoice playerChoice = ScreeningChoice.None;
+        public ExperienceState CurrentState => currentState;
+        public ScreeningChoice PlayerChoice => playerChoice;
         public ScreeningChoice GetPlayerChoice() => playerChoice;
 
         [Header("Locaties (Camera / Speler Transforms)")]

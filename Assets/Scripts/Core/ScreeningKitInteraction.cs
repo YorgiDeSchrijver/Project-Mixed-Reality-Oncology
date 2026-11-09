@@ -88,13 +88,24 @@ namespace Oncologie.Core
         {
             if (_isDelivered || !_hasBeenPickedUp) return;
 
-            // Nabijheid-detectie als back-up voor desktop muis-dragging of VR:
-            // Luc zit rond (0.90, -0.30, 0.40), zijn bord/handen op tafel liggen rond (0.45, 1.45, 0.50)
+            // Nabijheid-detectie als robuuste back-up voor desktop muis-dragging en VR interacties:
+            // 1. Optie B: Aan tafel voor Luc of direct bij zijn handen / bord
             Vector3 lucHandsPos = new Vector3(0.45f, 1.45f, 0.50f);
-            if (Vector3.Distance(transform.position, lucHandsPos) < 0.85f)
+            Vector3 zoneBPos = new Vector3(0.25f, 1.45f, 0.70f);
+            if (Vector3.Distance(transform.position, lucHandsPos) < 1.15f || Vector3.Distance(transform.position, zoneBPos) < 1.0f)
             {
                 DeliverChoice(ScreeningChoice.InsistedKeys);
                 onDeliveredKeys?.Invoke();
+                return;
+            }
+
+            // 2. Optie A: Bij de prullenmand / oud papier bak
+            Vector3 trashPos = new Vector3(-1.35f, 0.50f, 0.35f);
+            if (Vector3.Distance(transform.position, trashPos) < 1.0f)
+            {
+                DeliverChoice(ScreeningChoice.IgnoredTrash);
+                onDeliveredTrash?.Invoke();
+                return;
             }
         }
 
@@ -111,7 +122,7 @@ namespace Oncologie.Core
 
             // Check Optie A: Weggooien in de prullenmand
             if (targetName.Contains(trashZoneIdentifier) || targetTag.Contains(trashZoneIdentifier) || 
-                targetName.Contains("Bin") || targetName.Contains("Paper") || targetName.Contains("Trash") ||
+                targetName.Contains("Bin") || targetName.Contains("Paper") || targetName.Contains("Trash") || targetName.Contains("Zone_Trash") ||
                 parentName.Contains("Trash") || parentName.Contains("Bin"))
             {
                 DeliverChoice(ScreeningChoice.IgnoredTrash);
@@ -120,8 +131,8 @@ namespace Oncologie.Core
             // Check Optie B: Aan vader Luc geven
             else if (targetName.Contains(dadZoneIdentifier) || targetTag.Contains(dadZoneIdentifier) || 
                      targetName.Contains("Dad") || targetName.Contains("Hand") || targetName.Contains("Father") || 
-                     targetName.Contains("Luc") || targetName.Contains("GiveZone") ||
-                     parentName.Contains("Scavenger") || parentName.Contains("Luc") || parentName.Contains("Dad"))
+                     targetName.Contains("Luc") || targetName.Contains("GiveZone") || targetName.Contains("Keys") || targetName.Contains("Zone_Keys") ||
+                     parentName.Contains("Scavenger") || parentName.Contains("Luc") || parentName.Contains("Dad") || parentName.Contains("Zone_Keys"))
             {
                 DeliverChoice(ScreeningChoice.InsistedKeys);
                 onDeliveredKeys?.Invoke();

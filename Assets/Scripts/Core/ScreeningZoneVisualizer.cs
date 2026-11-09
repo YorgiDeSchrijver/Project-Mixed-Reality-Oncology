@@ -4,7 +4,9 @@ namespace Oncologie.Core
 {
     /// <summary>
     /// Toont duidelijke visuele indicators en 3D zwevende labels boven de twee keuzelocaties
-    /// (Oud papier vs Aan Vader Luc geven), zodat niet-technische testers en ouderen direct begrijpen wat ze moeten doen!
+    /// (Oud papier vs Aan Vader Luc geven).
+    /// Zorgt ervoor dat de zones ENKEL zichtbaar zijn tijdens de keuken-keuzefase (KitchenIntro)
+    /// en volledig onzichtbaar worden zodra de keuze gemaakt is, tijdens de darmwandeling en op de eindes.
     /// </summary>
     public class ScreeningZoneVisualizer : MonoBehaviour
     {
@@ -17,11 +19,23 @@ namespace Oncologie.Core
         [SerializeField] private Color zoneColor = new Color(1f, 0.5f, 0.2f, 0.8f);
 
         [Header("Animatie")]
-        [SerializeField] private float bounceHeight = 0.08f;
+        [SerializeField] private float bounceHeight = 0.06f;
         [SerializeField] private float bounceSpeed = 2.5f;
+
+        [Header("Visuele Weergave")]
+        [Tooltip("Toon het 2D HUD label boven de zone tijdens de intro keuzefase.")]
+        [SerializeField] private bool showFloatingHUD = true;
 
         private Vector3 _basePos;
         private Camera _mainCam;
+        private Renderer[] _childRenderers;
+        private Collider _collider;
+
+        private void Awake()
+        {
+            _childRenderers = GetComponentsInChildren<Renderer>(true);
+            _collider = GetComponent<Collider>();
+        }
 
         private void Start()
         {
@@ -46,20 +60,55 @@ namespace Oncologie.Core
         {
             if (_mainCam == null) _mainCam = Camera.main;
 
+            // Bepaal of de zones zichtbaar moeten zijn:
+            // ENKEL in de KitchenIntro fase EN zolang er nog geen keuze is gemaakt!
+            bool shouldBeActive = true;
+            if (ExperienceFlowManager.Instance != null)
+            {
+                shouldBeActive = (ExperienceFlowManager.Instance.CurrentState == ExperienceState.KitchenIntro 
+                                  && ExperienceFlowManager.Instance.PlayerChoice == ScreeningChoice.None);
+            }
+
+            // Schakel alle 3D visuals en colliders direct uit op de eindes of in de darm
+            if (_childRenderers != null && _childRenderers.Length > 0)
+            {
+                for (int i = 0; i < _childRenderers.Length; i++)
+                {
+                    if (_childRenderers[i] != null && _childRenderers[i].enabled != shouldBeActive)
+                    {
+                        _childRenderers[i].enabled = shouldBeActive;
+                    }
+                }
+            }
+
+            if (_collider != null && _collider.enabled != shouldBeActive)
+            {
+                _collider.enabled = shouldBeActive;
+            }
+
+            if (!shouldBeActive) return;
+
+            // Zachte zwevende animatie
             float newY = _basePos.y + Mathf.Sin(Time.time * bounceSpeed) * bounceHeight;
             transform.position = new Vector3(_basePos.x, newY, _basePos.z);
         }
-
-        [Header("Visuele Weergave")]
-        [Tooltip("Schakel 2D HUD labels uit om het scherm rustig en filmisch te houden zonder clutter.")]
-        [SerializeField] private bool showFloatingHUD = false;
 
         private void OnGUI()
         {
             if (!showFloatingHUD || _mainCam == null) return;
 
-            Vector3 screenPos = _mainCam.WorldToScreenPoint(transform.position + Vector3.up * 0.4f);
-            if (screenPos.z > 0.5f && screenPos.z < 12f)
+            // Onzichtbaar op de eindes en in de darm
+            if (ExperienceFlowManager.Instance != null)
+            {
+                if (ExperienceFlowManager.Instance.CurrentState != ExperienceState.KitchenIntro
+                    || ExperienceFlowManager.Instance.PlayerChoice != ScreeningChoice.None)
+                {
+                    return;
+                }
+            }
+
+            Vector3 screenPos = _mainCam.WorldToScreenPoint(transform.position + Vector3.up * 0.35f);
+            if (screenPos.z > 0.4f && screenPos.z < 10f)
             {
                 float x = screenPos.x - 100f;
                 float y = Screen.height - screenPos.y;
