@@ -66,20 +66,55 @@ namespace Oncologie.Core
 
         private void OnTriggerEnter(Collider other)
         {
-            // Veiligheid: de envelop kan NOOIT een keuze triggeren als de speler hem nog niet heeft opgepakt!
+            ProcessInteraction(other.gameObject);
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (collision != null && collision.collider != null)
+            {
+                ProcessInteraction(collision.collider.gameObject);
+            }
+        }
+
+        private void Update()
+        {
             if (_isDelivered || !_hasBeenPickedUp) return;
 
-            string targetName = other.gameObject.name;
-            string targetTag = other.gameObject.tag;
+            // Nabijheid-detectie als back-up voor desktop muis-dragging of VR:
+            // Luc zit rond (0.90, -0.30, 0.40), zijn bord/handen op tafel liggen rond (0.45, 1.45, 0.50)
+            Vector3 lucHandsPos = new Vector3(0.45f, 1.45f, 0.50f);
+            if (Vector3.Distance(transform.position, lucHandsPos) < 0.85f)
+            {
+                DeliverChoice(ScreeningChoice.InsistedKeys);
+                onDeliveredKeys?.Invoke();
+            }
+        }
+
+        private void ProcessInteraction(GameObject target)
+        {
+            // Veiligheid: de envelop kan NOOIT een keuze triggeren als de speler hem nog niet heeft opgepakt!
+            if (_isDelivered || !_hasBeenPickedUp || target == null) return;
+
+            string targetName = target.name;
+            string targetTag = target.tag;
+
+            // Check ook de parent naam (bijv. als je een child van Luc raakt)
+            string parentName = target.transform.parent != null ? target.transform.parent.name : "";
 
             // Check Optie A: Weggooien in de prullenmand
-            if (targetName.Contains(trashZoneIdentifier) || targetTag.Contains(trashZoneIdentifier) || targetName.Contains("Bin") || targetName.Contains("Paper"))
+            if (targetName.Contains(trashZoneIdentifier) || targetTag.Contains(trashZoneIdentifier) || 
+                targetName.Contains("Bin") || targetName.Contains("Paper") || targetName.Contains("Trash") ||
+                parentName.Contains("Trash") || parentName.Contains("Bin"))
             {
                 DeliverChoice(ScreeningChoice.IgnoredTrash);
                 onDeliveredTrash?.Invoke();
             }
             // Check Optie B: Aan vader Luc geven
-            else if (targetName.Contains(dadZoneIdentifier) || targetTag.Contains(dadZoneIdentifier) || targetName.Contains("Dad") || targetName.Contains("Hand") || targetName.Contains("Father") || targetName.Contains("Luc"))
+            else if (targetName.Contains(dadZoneIdentifier) || targetTag.Contains(dadZoneIdentifier) || 
+                     targetName.Contains("Dad") || targetName.Contains("Hand") || targetName.Contains("Father") || 
+                     targetName.Contains("Luc") || targetName.Contains("GiveZone") ||
+                     parentName.Contains("Scavenger") || parentName.Contains("Luc") || parentName.Contains("Dad"))
             {
                 DeliverChoice(ScreeningChoice.InsistedKeys);
                 onDeliveredKeys?.Invoke();
@@ -97,9 +132,13 @@ namespace Oncologie.Core
 
             Debug.Log($"[ScreeningKitInteraction] Envelop geplaatst! Keuze: {choice}");
 
-            if (ExperienceFlowManager.Instance != null)
+            var fm = ExperienceFlowManager.Instance != null 
+                ? ExperienceFlowManager.Instance 
+                : FindAnyObjectByType<ExperienceFlowManager>();
+
+            if (fm != null)
             {
-                ExperienceFlowManager.Instance.MakeChoice(choice);
+                fm.MakeChoice(choice);
             }
         }
 

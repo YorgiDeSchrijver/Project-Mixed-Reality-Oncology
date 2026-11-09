@@ -10,9 +10,11 @@ namespace Oncologie.Interaction
     public class InteractiveRewindClock : MonoBehaviour
     {
         [Header("Visuele Effecten")]
-        [SerializeField] private float rotationSpeed = 45f;
-        [SerializeField] private float bobAmplitude = 0.03f;
-        [SerializeField] private float bobFrequency = 2.0f;
+        [SerializeField] private bool rotateObject = false; // Standaard UIT: borden en tekst mogen nooit wegdraaien!
+        [SerializeField] private bool faceCamera = false;
+        [SerializeField] private float rotationSpeed = 30f;
+        [SerializeField] private float bobAmplitude = 0.02f;
+        [SerializeField] private float bobFrequency = 1.5f;
 
         private Vector3 _basePos;
         private bool _isHovered = false;
@@ -24,10 +26,27 @@ namespace Oncologie.Interaction
 
         private void Update()
         {
-            // Zwevend en langzaam roterend effect
-            transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
-            float newY = _basePos.y + Mathf.Sin(Time.time * bobFrequency) * bobAmplitude;
-            transform.position = new Vector3(_basePos.x, newY, _basePos.z);
+            if (rotateObject)
+            {
+                transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime, Space.World);
+            }
+
+            if (faceCamera && Camera.main != null)
+            {
+                Vector3 toCam = Camera.main.transform.position - transform.position;
+                toCam.y = 0f;
+                if (toCam.sqrMagnitude > 0.01f)
+                {
+                    // Canvas kijkt naar de speler
+                    transform.rotation = Quaternion.LookRotation(-toCam);
+                }
+            }
+
+            if (bobAmplitude > 0f)
+            {
+                float newY = _basePos.y + Mathf.Sin(Time.time * bobFrequency) * bobAmplitude;
+                transform.position = new Vector3(_basePos.x, newY, _basePos.z);
+            }
         }
 
         private void OnMouseDown()

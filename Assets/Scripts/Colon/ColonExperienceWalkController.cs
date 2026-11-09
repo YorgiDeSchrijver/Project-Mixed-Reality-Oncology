@@ -28,6 +28,7 @@ namespace Oncologie.Colon
         public bool isPlayerInside = false;
         private bool _introPlayed = false;
         private bool _polypShowcaseStarted = false;
+        private bool _canExit = false; // Pas waar zodra de volledige kankergroei/demonstratie is afgerond!
         private bool _exitReached = false;
 
         private void Awake()
@@ -59,8 +60,13 @@ namespace Oncologie.Colon
 
             if (exitAnchor == null)
             {
-                var pt35 = transform.Find("PlayerPath/PathPoint_035");
-                if (pt35 != null) exitAnchor = pt35;
+                var exitPortal = transform.Find("Colon_Exit_Portal");
+                if (exitPortal != null) exitAnchor = exitPortal;
+                else
+                {
+                    var pt35 = transform.Find("PlayerPath/PathPoint_035");
+                    if (pt35 != null) exitAnchor = pt35;
+                }
             }
         }
 
@@ -70,6 +76,7 @@ namespace Oncologie.Colon
             isPlayerInside = true;
             _introPlayed = false;
             _polypShowcaseStarted = false;
+            _canExit = false;
             _exitReached = false;
 
             // Zorg dat de speler direct VRIJ kan lopen
@@ -106,7 +113,8 @@ namespace Oncologie.Colon
             }
 
             // 2. Detecteer het bereiken van de tunnel-uitgang
-            if (!_exitReached && exitAnchor != null && _polypShowcaseStarted)
+            // CRUCIAAL: Mag PAS getriggerd worden als de kankerdemonstratie VOLLEDIG is afgerond (_canExit == true)!
+            if (_canExit && !_exitReached && exitAnchor != null)
             {
                 float distToExit = Vector3.Distance(playerTransform.position, exitAnchor.position);
                 if (distToExit <= exitDetectionRange)
@@ -118,7 +126,9 @@ namespace Oncologie.Colon
         }
 
         /// <summary>
-        /// Rustige, seniorenvriendelijke demonstratie bij de poliep (ruime leestijd).
+        /// Rustige, meeslepende demonstratie bij de poliep.
+        /// De speler blijft rustig voor de tumor staan en ziet de groei van Fase 1 naar Fase 4,
+        /// terwijl de verteller uitlegt dat vader Luc al die jaren van niets weet.
         /// </summary>
         private IEnumerator ElderlyFriendlyPolypRoutine()
         {
@@ -131,7 +141,12 @@ namespace Oncologie.Colon
                 // GOEDE ROUTE: Vroege opsporing & genezing
                 if (DialogueManager.Instance != null)
                 {
-                    DialogueManager.Instance.PlaySequence("Darm_Route_B_Genezing");
+                    DialogueManager.Instance.PlaySingleLine(new DialogueLine(
+                        "Dr. Verteller",
+                        new Color(0.35f, 0.85f, 1f),
+                        "Dankzij jouw aandringen werd de test opgestuurd. De artsen vonden het adenoom in een vroeg stadium!",
+                        6.5f
+                    ));
                 }
 
                 yield return new WaitForSeconds(3.0f);
@@ -141,54 +156,92 @@ namespace Oncologie.Colon
                     PolypProgressionManager.Instance.StartPolypRemovalAnimation();
                 }
 
-                // Geef rustig de tijd om de verwijdering te observeren (12 seconden)
-                yield return new WaitForSeconds(12.0f);
+                // Geef rustig de tijd om de verwijdering te observeren (10 seconden)
+                yield return new WaitForSeconds(10.0f);
 
                 if (DialogueManager.Instance != null)
                 {
                     DialogueManager.Instance.PlaySingleLine(new DialogueLine(
                         "Dr. Verteller",
                         new Color(1f, 0.85f, 0.35f),
-                        "De darmwand is volledig hersteld. Loop gerust verder door de tunnel naar de uitgang.",
+                        "De medische lis heeft de poliep pijnloos weggenomen. Kanker heeft nooit een kans gekregen. Vader Luc is genezen!",
+                        7.5f
+                    ));
+                }
+
+                yield return new WaitForSeconds(7.5f);
+
+                // Nu pas mag de speler naar de uitgang lopen
+                _canExit = true;
+
+                if (DialogueManager.Instance != null)
+                {
+                    DialogueManager.Instance.PlaySingleLine(new DialogueLine(
+                        "Dr. Verteller",
+                        new Color(0.9f, 0.9f, 0.9f),
+                        "Loop nu rustig verder door de tunnel naar het portaal om terug te keren naar de keuken.",
                         7.0f
                     ));
                 }
             }
             else
             {
-                // SLECHTE ROUTE: Rustige kankergroei van Fase 1 naar Fase 4 (9 seconden per fase)
-                if (DialogueManager.Instance != null)
-                {
-                    DialogueManager.Instance.PlaySequence("Darm_Route_A_Kanker");
-                }
-
+                // SLECHTE ROUTE: Rustige kankergroei van Fase 1 naar Fase 4
+                // De speler blijft hier en ziet stap voor stap hoe het erger wordt terwijl vader Luc nergens van weet
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.StartHeartbeat(false);
                 }
 
-                // Fase 1: Zichtbaar maken adenoom (8 seconden leestijd)
+                // Fase 1: Zichtbaar maken adenoom (8.5 seconden)
                 if (PolypProgressionManager.Instance != null)
                 {
                     PolypProgressionManager.Instance.ApplyStage(1);
                 }
-                yield return new WaitForSeconds(8.0f);
+                if (DialogueManager.Instance != null)
+                {
+                    DialogueManager.Instance.PlaySingleLine(new DialogueLine(
+                        "Dr. Verteller",
+                        new Color(1f, 0.85f, 0.35f),
+                        "Kijk goed naar de darmwand. Dit kleine knobbeltje is een adenoom (poliep). Vader Luc voelt zich kerngezond en merkt hier helemaal niets van.",
+                        8.5f
+                    ));
+                }
+                yield return new WaitForSeconds(9.0f);
 
-                // Fase 2: Uitgroei na 1-2 jaar (9 seconden leestijd)
+                // Fase 2: Uitgroei na 2 jaar (9 seconden)
                 if (PolypProgressionManager.Instance != null)
                 {
                     PolypProgressionManager.Instance.ApplyStage(2);
                 }
+                if (DialogueManager.Instance != null)
+                {
+                    DialogueManager.Instance.PlaySingleLine(new DialogueLine(
+                        "Dr. Verteller",
+                        new Color(1f, 0.70f, 0.35f),
+                        "2 jaar later... De kankercellen delen zich ongemerkt dieper in het slijmvlies. Luc heeft nergens last van en weet nog van niets.",
+                        8.5f
+                    ));
+                }
                 yield return new WaitForSeconds(9.0f);
 
-                // Fase 3: Gevorderd carcinoom (9 seconden leestijd)
+                // Fase 3: Gevorderd carcinoom na 3 jaar (9 seconden)
                 if (PolypProgressionManager.Instance != null)
                 {
                     PolypProgressionManager.Instance.ApplyStage(3);
                 }
+                if (DialogueManager.Instance != null)
+                {
+                    DialogueManager.Instance.PlaySingleLine(new DialogueLine(
+                        "Dr. Verteller",
+                        new Color(1f, 0.55f, 0.35f),
+                        "3 jaar later... De poliep is veranderd in een kwaadaardige tumor die door de darmwand dringt. Luc voelt nog steeds geen énkele pijn.",
+                        8.5f
+                    ));
+                }
                 yield return new WaitForSeconds(9.0f);
 
-                // Fase 4: Invasieve tumor met bloedvatinfiltratie (12 seconden leestijd)
+                // Fase 4: Invasieve tumor met bloedvatinfiltratie na 5 jaar (11 seconden)
                 if (PolypProgressionManager.Instance != null)
                 {
                     PolypProgressionManager.Instance.ApplyStage(4);
@@ -197,15 +250,26 @@ namespace Oncologie.Colon
                 {
                     AudioManager.Instance.StartHeartbeat(true);
                 }
-                yield return new WaitForSeconds(12.0f);
-
-                // Vriendelijke aanwijzing om naar de uitgang te lopen
                 if (DialogueManager.Instance != null)
                 {
                     DialogueManager.Instance.PlaySingleLine(new DialogueLine(
                         "Dr. Verteller",
-                        new Color(1f, 0.45f, 0.4f),
-                        "De ziekte is uitgezaaid. Loop nu rustig verder door de tunnel naar de uitgang.",
+                        new Color(1f, 0.35f, 0.35f),
+                        "5 jaar later... De tumor breekt door de darmwand en dringt de bloedvaten binnen: uitzaaiing. Pas nu krijgt Luc pijn... maar nu is het te laat.",
+                        9.5f
+                    ));
+                }
+                yield return new WaitForSeconds(10.5f);
+
+                // Nu pas is de demonstratie klaar en mag de speler naar de uitgang
+                _canExit = true;
+
+                if (DialogueManager.Instance != null)
+                {
+                    DialogueManager.Instance.PlaySingleLine(new DialogueLine(
+                        "Dr. Verteller",
+                        new Color(0.9f, 0.9f, 0.9f),
+                        "De ziekte is onbehandelbaar. Loop nu rustig verder door de tunnel naar het portaal om terug te keren.",
                         8.0f
                     ));
                 }

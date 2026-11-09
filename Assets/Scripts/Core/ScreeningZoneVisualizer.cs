@@ -50,9 +50,13 @@ namespace Oncologie.Core
             transform.position = new Vector3(_basePos.x, newY, _basePos.z);
         }
 
+        [Header("Visuele Weergave")]
+        [Tooltip("Schakel 2D HUD labels uit om het scherm rustig en filmisch te houden zonder clutter.")]
+        [SerializeField] private bool showFloatingHUD = false;
+
         private void OnGUI()
         {
-            if (_mainCam == null) return;
+            if (!showFloatingHUD || _mainCam == null) return;
 
             Vector3 screenPos = _mainCam.WorldToScreenPoint(transform.position + Vector3.up * 0.4f);
             if (screenPos.z > 0.5f && screenPos.z < 12f)
