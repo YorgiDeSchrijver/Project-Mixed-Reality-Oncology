@@ -201,6 +201,10 @@ namespace Oncologie.Core
                 yield return FadeRoutine(1f, 0f, fadeDuration);
             }
 
+            // Herstel spelerbesturing zodat de speler direct ZELF vrij door de darm kan lopen!
+            if (testPlayer != null) testPlayer.disableMovement = false;
+            if (cc != null) cc.enabled = true;
+
             _isTransitioning = false;
         }
 

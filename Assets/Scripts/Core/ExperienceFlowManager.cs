@@ -357,13 +357,23 @@ namespace Oncologie.Core
 
             if (playerChoice == ScreeningChoice.None) playerChoice = ScreeningChoice.IgnoredTrash;
 
-            Vector3 cPos = colonStartAnchor != null ? colonStartAnchor.position : new Vector3(0.1f, -48.0f, 8.5f);
+            Vector3 cPos = colonStartAnchor != null ? colonStartAnchor.position : new Vector3(0.0f, -52.18f, 0.5f);
             TeleportPlayer(cPos, Quaternion.identity);
+
+            // Zorg dat de speler direct ZELF vrij kan lopen in de darm
+            var testPlayer = playerTransform != null ? playerTransform.GetComponent<SampleSceneTestPlayer>() : null;
+            if (testPlayer != null) testPlayer.disableMovement = false;
+            var charCtrl = playerTransform != null ? playerTransform.GetComponent<CharacterController>() : null;
+            if (charCtrl != null) charCtrl.enabled = true;
 
             currentState = ExperienceState.ColonDarmwandeling;
             onColonEntered?.Invoke();
 
-            if (Oncologie.Colon.ColonPathFollower.Instance != null)
+            if (Oncologie.Colon.ColonExperienceWalkController.Instance != null)
+            {
+                Oncologie.Colon.ColonExperienceWalkController.Instance.StartColonWalk();
+            }
+            else if (Oncologie.Colon.ColonPathFollower.Instance != null)
             {
                 Oncologie.Colon.ColonPathFollower.Instance.StartColonWalk(playerTransform);
             }

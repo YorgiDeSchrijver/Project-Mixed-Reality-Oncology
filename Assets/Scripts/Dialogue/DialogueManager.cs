@@ -69,6 +69,18 @@ namespace Oncologie.Dialogue
             }
         }
 
+        /// <summary>
+        /// Speelt een losse dialoogregel af met ondertiteling en eventuele audio.
+        /// </summary>
+        public void PlaySingleLine(DialogueLine line, Action onComplete = null)
+        {
+            if (line == null) return;
+            var seq = new DialogueSequence("SingleLine", "");
+            seq.lines.Add(line);
+            if (_currentDialogueRoutine != null) StopCoroutine(_currentDialogueRoutine);
+            _currentDialogueRoutine = StartCoroutine(RunSequenceRoutine(seq, onComplete));
+        }
+
         public void StopCurrent()
         {
             if (_currentDialogueRoutine != null)

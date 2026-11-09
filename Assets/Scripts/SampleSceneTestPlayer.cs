@@ -24,9 +24,12 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
-        characterController.height = 2.4f;
-        characterController.radius = 0.25f;
-        characterController.center = new Vector3(0f, 1.2f, 0f);
+        if (characterController.height <= 0f)
+        {
+            characterController.height = 1.8f;
+            characterController.radius = 0.25f;
+            characterController.center = new Vector3(0f, 0.9f, 0f);
+        }
 
         // Zoek of er al een camera is
         Camera existingCam = GetComponentInChildren<Camera>();
@@ -34,14 +37,14 @@ public sealed class SampleSceneTestPlayer : MonoBehaviour
         {
             camComponent = existingCam;
             playerCamera = existingCam.transform;
-            playerCamera.localPosition = new Vector3(0f, 2.25f, 0f);
+            // Behoud de door de gebruiker ingestelde ooghoogte
         }
         else
         {
             var cameraObject = new GameObject("Player Camera");
             cameraObject.tag = "MainCamera";
             cameraObject.transform.SetParent(transform, false);
-            cameraObject.transform.localPosition = new Vector3(0f, 2.25f, 0f);
+            cameraObject.transform.localPosition = new Vector3(0f, 1.70f, 0f);
 
             camComponent = cameraObject.AddComponent<Camera>();
             cameraObject.AddComponent<AudioListener>();
