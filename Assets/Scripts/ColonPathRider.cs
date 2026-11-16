@@ -79,6 +79,11 @@ public class ColonPathRider : MonoBehaviour
     public bool IsMoving => mode == ControlMode.Auto ? moving : Mathf.Abs(velocity) > 0.01f;
     public bool Ready => samples.Count > 1;
 
+    // Alleen-lezen toegang tot de middellijn (o.a. voor ColonWallMotion)
+    public int SampleCount => samples.Count;
+    public Vector3 SamplePoint(int i) => samples[i];
+    public float SampleDistance(int i) => cumulative[i];
+
     /// <summary>Afstand (m) langs het pad van het punt dat het dichtst bij een wereldpositie ligt.</summary>
     public float ProjectDistance(Vector3 worldPos)
     {

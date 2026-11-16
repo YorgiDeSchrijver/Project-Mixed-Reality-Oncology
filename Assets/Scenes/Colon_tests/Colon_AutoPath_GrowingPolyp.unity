@@ -518,8 +518,38 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5336043375948187087, guid: fad0c30853101ab408db70e273e7d452, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1682997055}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: fad0c30853101ab408db70e273e7d452, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 184169273}
   m_SourcePrefab: {fileID: 100100000, guid: fad0c30853101ab408db70e273e7d452, type: 3}
+--- !u!1 &184169272 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fad0c30853101ab408db70e273e7d452, type: 3}
+  m_PrefabInstance: {fileID: 184169271}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &184169273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 184169272}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 732016f55e1f83f4a9f034d64bd5fd3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ColonWallMotion
+  rider: {fileID: 65365158}
+  head: {fileID: 516009094}
+  waveAmplitude: 0.035
+  waveLength: 7
+  waveSpeed: 0.25
+  twitchAmplitude: 0.012
+  twitchSpeed: 0.9
+  twitchDetail: 2.5
+  activeRange: 10
+  updatesPerSecond: 30
 --- !u!1 &196726234
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,163 @@
+using System.Collections;
+using UnityEngine;
+
+/// <summary>
+/// Laat de darmwand "leven": een trage peristaltische golf langs de darm plus kleine, onregelmatige
+/// bewegingen van de wand. De wand beweegt alleen radiaal (naar of van de middellijn), een paar centimeter.
+/// Zuinig gebouwd voor de Quest: alleen de segmenten dichtbij de speler worden bijgewerkt, met een
+/// instelbaar aantal updates per seconde. Er worden geen textures of extra geometrie toegevoegd.
+/// Zet dit op Colon_Tunnel. De FBX moet Read/Write aan hebben.
+/// </summary>
+public class ColonWallMotion : MonoBehaviour
+{
+    [Header("Referenties")]
+    public ColonPathRider rider;
+    [Tooltip("Meestal de Main Camera. Leeg = Camera.main")]
+    public Transform head;
+
+    [Header("Peristaltische golf")]
+    [Tooltip("Hoeveel (m) de wand heen en weer gaat door de grote golf. 0.02-0.05 is subtiel.")]
+    public float waveAmplitude = 0.035f;
+    [Tooltip("Afstand (m) tussen twee golftoppen")]
+    public float waveLength = 7f;
+    [Tooltip("Snelheid (m/s) waarmee de golf door de darm reist")]
+    public float waveSpeed = 0.25f;
+
+    [Header("Kleine bewegingen")]
+    [Tooltip("Amplitude (m) van de onregelmatige beweging")]
+    public float twitchAmplitude = 0.012f;
+    [Tooltip("Hoe snel de kleine bewegingen gaan (rad/s)")]
+    public float twitchSpeed = 0.9f;
+    [Tooltip("Hoe fijn de kleine bewegingen zijn (hoger = kleinere plekjes)")]
+    public float twitchDetail = 2.5f;
+
+    [Header("Performance")]
+    [Tooltip("Alleen segmenten binnen deze afstand (m) van de speler bewegen")]
+    public float activeRange = 10f;
+    [Range(5, 60)] public int updatesPerSecond = 30;
+
+    class Segment
+    {
+        public MeshFilter filter;
+        public Mesh mesh;
+        public Vector3[] baseV, work, dir;   // dir: radiaal naar buiten, in lokale ruimte
+        public float[] s, pa, pb;            // afstand langs pad en twee fases per punt
+        public bool ready;
+    }
+
+    Segment[] segments;
+    float nextUpdate;
+
+    void Start()
+    {
+        if (rider == null) rider = FindFirstObjectByType<ColonPathRider>();
+        if (head == null && Camera.main != null) head = Camera.main.transform;
+
+        var filters = GetComponentsInChildren<MeshFilter>(true);
+        segments = new Segment[filters.Length];
+        for (int i = 0; i < filters.Length; i++)
+        {
+            var src = filters[i].sharedMesh;
+            if (src == null) continue;
+            if (!src.isReadable)
+            {
+                Debug.LogError("ColonWallMotion: zet Read/Write aan op de FBX van " + filters[i].name + " (Model Import Settings).");
+                continue;
+            }
+            var seg = new Segment { filter = filters[i], mesh = Instantiate(src) };
+            seg.mesh.name = src.name + "_Alive";
+            seg.mesh.MarkDynamic();
+            Bounds b = src.bounds; b.Expand(waveAmplitude * 3f + twitchAmplitude * 3f);
+            seg.mesh.bounds = b;
+            filters[i].sharedMesh = seg.mesh;
+            segments[i] = seg;
+        }
+        StartCoroutine(PrepareAll());
+    }
+
+    IEnumerator PrepareAll()
+    {
+        while (rider == null || !rider.Ready) yield return null;
+
+        int count = rider.SampleCount;
+        var pts = new Vector3[count]; var dist = new float[count];
+        for (int i = 0; i < count; i++) { pts[i] = rider.SamplePoint(i); dist[i] = rider.SampleDistance(i); }
+
+        // vaste, willekeurige richtingen voor de fases (zelfde bij elke start)
+        var rng = new System.Random(1234);
+        Vector3 v1 = new Vector3((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f).normalized;
+        Vector3 v2 = new Vector3((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f).normalized;
+
+        foreach (var seg in segments)
+        {
+            if (seg == null) continue;
+            Transform tr = seg.filter.transform;
+            Vector3[] v = seg.mesh.vertices;
+            int n = v.Length;
+            seg.baseV = v; seg.work = new Vector3[n]; seg.dir = new Vector3[n];
+            seg.s = new float[n]; seg.pa = new float[n]; seg.pb = new float[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 w = tr.TransformPoint(v[i]);
+                int best = 0; float bestSqr = float.MaxValue;
+                for (int j = 0; j < count; j++)
+                {
+                    float d = (pts[j] - w).sqrMagnitude;
+                    if (d < bestSqr) { bestSqr = d; best = j; }
+                }
+                Vector3 tan = (pts[Mathf.Min(best + 1, count - 1)] - pts[Mathf.Max(best - 1, 0)]).normalized;
+                Vector3 radial = w - pts[best];
+                radial -= tan * Vector3.Dot(radial, tan);
+                radial = radial.sqrMagnitude > 1e-6f ? radial.normalized : Vector3.up;
+
+                seg.dir[i] = tr.InverseTransformDirection(radial);
+                seg.s[i] = dist[best];
+                seg.pa[i] = Vector3.Dot(w, v1) * twitchDetail;
+                seg.pb[i] = Vector3.Dot(w, v2) * twitchDetail;
+
+                if ((i % 600) == 599) yield return null;   // verspreid over frames
+            }
+            seg.ready = true;
+        }
+    }
+
+    void Update()
+    {
+        if (segments == null || Time.time < nextUpdate) return;
+        nextUpdate = Time.time + 1f / updatesPerSecond;
+
+        Vector3 hp = head != null ? head.position : Vector3.zero;
+        float t = Time.time;
+        float k1 = 2f * Mathf.PI / Mathf.Max(0.1f, waveLength);
+        float w1 = k1 * waveSpeed;
+        float k2 = k1 / 0.37f;     // kortere golfjes (haustra)
+        float tw = twitchSpeed;
+
+        foreach (var seg in segments)
+        {
+            if (seg == null || !seg.ready) continue;
+            if (head != null)
+            {
+                Bounds wb = seg.filter.GetComponent<Renderer>().bounds;
+                if ((wb.ClosestPoint(hp) - hp).sqrMagnitude > activeRange * activeRange) continue;
+            }
+
+            Vector3[] b = seg.baseV, w = seg.work, d = seg.dir;
+            for (int i = 0; i < b.Length; i++)
+            {
+                float s = seg.s[i];
+                float a = waveAmplitude * (Mathf.Sin(k1 * s - w1 * t) + 0.5f * Mathf.Sin(k2 * s + 1.7f * t * 0.25f))
+                        + twitchAmplitude * Mathf.Sin(seg.pa[i] + tw * t) * Mathf.Sin(seg.pb[i] - 0.6f * tw * t);
+                w[i] = b[i] + d[i] * a;
+            }
+            seg.mesh.vertices = w;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (segments == null) return;
+        foreach (var seg in segments) if (seg != null && seg.mesh != null) Destroy(seg.mesh);
+    }
+}
