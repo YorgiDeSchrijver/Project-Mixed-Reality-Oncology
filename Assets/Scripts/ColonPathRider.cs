@@ -7,11 +7,13 @@ using UnityEngine.InputSystem;
 /// Beweegt de XR Origin langs de PathPoint_xxx-objecten uit Colon_Tunnel.fbx.
 /// Modus Manual: de speler duwt de thumbstick vooruit/achteruit en glijdt zo langs het pad.
 /// Modus Auto: het pad wordt automatisch afgelegd (handig voor cutscenes).
+/// Modus Free: de speler loopt vrij in alle richtingen (vooruit/achteruit/links/rechts t.o.v. de kijkrichting)
+///             en wordt alleen binnen de darm gehouden; het pad is dan alleen nog de middellijn.
 /// Zet dit script op een lege GameObject (bv. "ColonRide").
 /// </summary>
 public class ColonPathRider : MonoBehaviour
 {
-    public enum ControlMode { Manual, Auto }
+    public enum ControlMode { Manual, Auto, Free }
 
     [Header("Referenties")]
     [Tooltip("De PlayerPath-parent met PathPoint_000, _001, ... als kinderen")]
@@ -46,6 +48,12 @@ public class ColonPathRider : MonoBehaviour
     [Tooltip("Alleen Auto-modus: start meteen")]
     public bool autoStart = false;
 
+    [Header("Vrij lopen (alleen modus Free)")]
+    [Tooltip("Hoever (m) het hoofd van de middellijn van de darm mag. Houd iets kleiner dan de darm zelf.")]
+    public float tubeRadius = 0.8f;
+    [Tooltip("Ook omhoog/omlaag bewegen in de kijkrichting. Uit = alleen horizontaal.")]
+    public bool freeVertical = true;
+
     [Header("Veiligheid")]
     [Tooltip("Zet CharacterController, gravity, teleport en joystick-beweging uit op de XR Origin. Anders vechten die tegen dit script.")]
     public bool disableOtherLocomotion = true;
@@ -59,6 +67,7 @@ public class ColonPathRider : MonoBehaviour
     readonly List<float> cumulative = new List<float>();
     float totalLength;
     float distance;
+    Vector3 freeVelocity;    // modus Free: huidige snelheid in wereldruimte
     float velocity;          // huidige snelheid langs het pad (m/s, negatief = achteruit)
     bool moving;             // alleen Auto-modus
     bool endFired;
@@ -99,6 +108,13 @@ public class ColonPathRider : MonoBehaviour
             {
                 Debug.LogError("ColonPathRider: geen camera gevonden onder de XR Origin.");
             }
+        }
+
+        // Geen binding ingesteld in de Inspector? Dan de linker thumbstick (en gamepad) gebruiken.
+        if (moveAction.reference == null && moveAction.action != null && moveAction.action.bindings.Count == 0)
+        {
+            moveAction.action.AddBinding("<XRController>{LeftHand}/thumbstick");
+            moveAction.action.AddBinding("<Gamepad>/leftStick");
         }
 
         if (!disableOtherLocomotion || xrOrigin == null) return;
@@ -191,25 +207,31 @@ public class ColonPathRider : MonoBehaviour
     }
 
     // ---------- input ----------
-    float ReadInput()
+    Vector2 ReadMove()
     {
-        if (!inputEnabled) return 0f;
+        if (!inputEnabled) return Vector2.zero;
 
-        float v = 0f;
-        if (moveAction.action != null) v = moveAction.action.ReadValue<Vector2>().y;
-
-        if (Mathf.Abs(v) < deadzone) v = 0f;
-        else v = Mathf.Sign(v) * Mathf.InverseLerp(deadzone, 1f, Mathf.Abs(v));
+        Vector2 v = moveAction.action != null ? moveAction.action.ReadValue<Vector2>() : Vector2.zero;
+        float mag = v.magnitude;
+        if (mag < deadzone) v = Vector2.zero;
+        else v = v / mag * Mathf.InverseLerp(deadzone, 1f, Mathf.Min(1f, mag));
 
         if (allowKeyboard && Keyboard.current != null)
         {
-            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) v = 1f;
-            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) v = -1f;
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) v.y = 1f;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) v.y = -1f;
+            if (mode == ControlMode.Free)
+            {
+                if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) v.x = 1f;
+                if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) v.x = -1f;
+            }
         }
 
-        if (!allowBackwards) v = Mathf.Max(0f, v);
+        if (!allowBackwards) v.y = Mathf.Max(0f, v.y);
         return v;
     }
+
+    float ReadInput() => ReadMove().y;
 
     // Zacht afremmen vlak voor het begin of einde van het pad
     float EdgeEase(float signedDirection)
@@ -223,6 +245,24 @@ public class ColonPathRider : MonoBehaviour
     {
         if (samples.Count < 2) return;
 
+        if (mode == ControlMode.Free) UpdateFree();
+        else UpdatePath();
+
+        bool atEnd = distance >= totalLength - 0.01f;
+        if (atEnd && !endFired)
+        {
+            endFired = true;
+            if (mode == ControlMode.Auto) moving = false;
+            onReachedEnd?.Invoke();
+        }
+        else if (!atEnd && endFired && distance < totalLength - 0.5f)
+        {
+            endFired = false; // speler is een stukje teruggegaan: event mag opnieuw
+        }
+    }
+
+    void UpdatePath()
+    {
         float target;
         if (mode == ControlMode.Auto)
         {
@@ -244,18 +284,64 @@ public class ColonPathRider : MonoBehaviour
         if ((distance <= 0f && velocity < 0f) || (distance >= totalLength && velocity > 0f)) velocity = 0f;
 
         Place(distance, false);
+    }
 
-        bool atEnd = distance >= totalLength - 0.01f;
-        if (atEnd && !endFired)
+    // ---------- vrij lopen ----------
+    void UpdateFree()
+    {
+        if (head == null || xrOrigin == null) return;
+
+        Vector2 m = ReadMove();
+        Vector3 fwd = head.transform.forward;
+        if (!freeVertical) fwd.y = 0f;
+        fwd = fwd.sqrMagnitude > 1e-4f ? fwd.normalized : Vector3.forward;
+        Vector3 right = head.transform.right; right.y = 0f; right = right.sqrMagnitude > 1e-4f ? right.normalized : Vector3.right;
+
+        Vector3 wish = Vector3.ClampMagnitude(fwd * m.y + right * m.x, 1f) * speed;
+        freeVelocity = Vector3.MoveTowards(freeVelocity, wish, acceleration * Time.deltaTime);
+
+        Vector3 pos = head.transform.position + freeVelocity * Time.deltaTime;
+        int idx = ConstrainToTube(ref pos);
+
+        // geraakt de wand? dan de snelheid in die richting wegnemen
+        Vector3 moved = pos - head.transform.position;
+        if (freeVelocity.sqrMagnitude > 1e-6f && moved.sqrMagnitude < (freeVelocity * Time.deltaTime).sqrMagnitude * 0.25f)
+            freeVelocity = Vector3.zero;
+
+        xrOrigin.position += pos - head.transform.position;
+        distance = cumulative[idx];   // zodat PolypStation en events blijven werken
+        velocity = 0f;
+    }
+
+    int NearestSample(Vector3 p)
+    {
+        int best = 0; float bestSqr = float.MaxValue;
+        for (int i = 0; i < samples.Count; i++)
         {
-            endFired = true;
-            if (mode == ControlMode.Auto) moving = false;
-            onReachedEnd?.Invoke();
+            float d = (samples[i] - p).sqrMagnitude;
+            if (d < bestSqr) { bestSqr = d; best = i; }
         }
-        else if (!atEnd && endFired && distance < totalLength - 0.5f)
+        return best;
+    }
+
+    /// <summary>Houdt een punt binnen de buis rond de middellijn (en binnen het begin/einde). Geeft de dichtstbijzijnde sample terug.</summary>
+    int ConstrainToTube(ref Vector3 p)
+    {
+        int i = NearestSample(p);
+        int last = samples.Count - 1;
+        Vector3 c = samples[i];
+        Vector3 off = p - c;
+
+        if (i == 0 || i == last)
         {
-            endFired = false; // speler is een stukje teruggegaan: event mag opnieuw
+            Vector3 tan = (i == 0 ? samples[1] - samples[0] : samples[last] - samples[last - 1]).normalized;
+            float along = Vector3.Dot(off, tan);
+            if ((i == 0 && along < 0f) || (i == last && along > 0f)) off -= tan * along;   // geen gat voorbij de uiteinden
         }
+
+        if (off.magnitude > tubeRadius) off = off.normalized * tubeRadius;
+        p = c + off;
+        return i;
     }
 
     // ---------- plaatsen ----------
