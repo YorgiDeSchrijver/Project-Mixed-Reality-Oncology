@@ -1334,6 +1334,7 @@ GameObject:
   m_Component:
   - component: {fileID: 728654655}
   - component: {fileID: 728654656}
+  - component: {fileID: 728654657}
   m_Layer: 0
   m_Name: Station_Stage3
   m_TagString: Untagged
@@ -1400,6 +1401,18 @@ MonoBehaviour:
   onLeave:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &728654657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 728654654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd24c75e0c6fe1840a83f5035810d60a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WallAttached
 --- !u!1 &776438325
 GameObject:
   m_ObjectHideFlags: 0
@@ -1601,6 +1614,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1059925675}
   - component: {fileID: 1059925676}
+  - component: {fileID: 1059925677}
   m_Layer: 0
   m_Name: Station_Stage2
   m_TagString: Untagged
@@ -1667,6 +1681,18 @@ MonoBehaviour:
   onLeave:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1059925677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1059925674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd24c75e0c6fe1840a83f5035810d60a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WallAttached
 --- !u!1 &1076899068
 GameObject:
   m_ObjectHideFlags: 0
@@ -1739,6 +1765,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1196780426}
   - component: {fileID: 1196780427}
+  - component: {fileID: 1196780428}
   m_Layer: 0
   m_Name: Station_Stage4
   m_TagString: Untagged
@@ -1805,6 +1832,18 @@ MonoBehaviour:
   onLeave:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1196780428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196780425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd24c75e0c6fe1840a83f5035810d60a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WallAttached
 --- !u!1 &1202707734
 GameObject:
   m_ObjectHideFlags: 0
@@ -2277,6 +2316,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1593632596}
   - component: {fileID: 1593632597}
+  - component: {fileID: 1593632598}
   m_Layer: 0
   m_Name: Station_Stage1
   m_TagString: Untagged
@@ -2343,6 +2383,18 @@ MonoBehaviour:
   onLeave:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1593632598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1593632595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd24c75e0c6fe1840a83f5035810d60a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WallAttached
 --- !u!1 &1640033029
 GameObject:
   m_ObjectHideFlags: 0

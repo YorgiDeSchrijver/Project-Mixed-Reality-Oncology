@@ -66,6 +66,7 @@ public class ColonWallMotion : MonoBehaviour
     }
 
     Segment[] segments;
+    WallAttached[] attached = new WallAttached[0];
     float nextUpdate;
     float lastUpdateTime;
     Vector3 lastHeadPos;
@@ -146,6 +147,34 @@ public class ColonWallMotion : MonoBehaviour
             }
             seg.ready = true;
         }
+
+        yield return StartCoroutine(AttachObjects());
+    }
+
+    // Koppel elk WallAttached-object aan het dichtstbijzijnde punt van de wand
+    IEnumerator AttachObjects()
+    {
+        var found = FindObjectsByType<WallAttached>(FindObjectsSortMode.None);
+        foreach (var a in found)
+        {
+            a.basePosition = a.transform.position;
+            a.segment = -1; a.vertex = -1;
+            float best = float.MaxValue;
+            for (int si = 0; si < segments.Length; si++)
+            {
+                var seg = segments[si];
+                if (seg == null || !seg.ready) continue;
+                Transform tr = seg.filter.transform;
+                Vector3 local = tr.InverseTransformPoint(a.basePosition);
+                for (int i = 0; i < seg.baseV.Length; i++)
+                {
+                    float d = (seg.baseV[i] - local).sqrMagnitude;
+                    if (d < best) { best = d; a.segment = si; a.vertex = i; }
+                }
+            }
+            yield return null;
+        }
+        attached = found;
     }
 
     void Update()
@@ -183,8 +212,9 @@ public class ColonWallMotion : MonoBehaviour
         float k2 = k1 / 0.37f;     // kortere golfjes (haustra)
         float tw = twitchSpeed;
 
-        foreach (var seg in segments)
+        for (int si = 0; si < segments.Length; si++)
         {
+            var seg = segments[si];
             if (seg == null || !seg.ready) continue;
             if (head != null)
             {
@@ -208,6 +238,19 @@ public class ColonWallMotion : MonoBehaviour
                 w[i] = b[i] + d[i] * a;
             }
             seg.mesh.vertices = w;
+            MoveAttached(si, seg);
+        }
+    }
+
+    // Objecten die op de wand zitten bewegen precies mee met het wandpunt waar ze aan vastzitten
+    void MoveAttached(int si, Segment seg)
+    {
+        Transform tr = seg.filter.transform;
+        for (int k = 0; k < attached.Length; k++)
+        {
+            var a = attached[k];
+            if (a == null || a.segment != si) continue;
+            a.transform.position = a.basePosition + tr.TransformVector(seg.work[a.vertex] - seg.baseV[a.vertex]);
         }
     }
 
