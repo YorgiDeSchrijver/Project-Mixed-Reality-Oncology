@@ -40,6 +40,16 @@ namespace Oncologie.Core
             Load(IrlScene);
         }
 
+        /// <summary>Herlaadt de IRL-scène (bv. na "tijd terugdraaien").</summary>
+        public static void ReloadIrl() => Load(IrlScene);
+
+        /// <summary>Test-snelkoppeling: laad meteen het einde voor een bepaalde keuze.</summary>
+        public static void LoadOutro(ScreeningChoice choice)
+        {
+            PlayerChoice = choice;
+            ReturnToIrl();
+        }
+
         /// <summary>Volledige reset: volgende IRL-load start terug bij de intro.</summary>
         public static void ResetSession()
         {
@@ -88,6 +98,11 @@ namespace Oncologie.Core
                 return;
             }
             rider.onReachedEnd.AddListener(ReturnToIrl);
+
+            // Zachte aankomst: vanuit zwart infaden, zodat de overgang uit de keuken doorloopt.
+            var fader = Oncologie.IRL.ScreenFader.Instance;
+            fader.SetImmediate(1f);
+            fader.StartCoroutine(fader.Fade(0f, 2.5f));
         }
     }
 }
