@@ -17,7 +17,6 @@ namespace Oncologie.Core
             SetupAudio();
             SetupExperience();
             SetupZones();
-            SetupColon();
             SetupOutroBillboard();
         }
 
@@ -41,15 +40,13 @@ namespace Oncologie.Core
                 manager = mgrGO.AddComponent<ExperienceFlowManager>();
             }
 
-            // Koppel Kitchen & Organ Environments
+            // Koppel Kitchen Environment
             GameObject kitchen = GameObject.Find("kitchen");
-            GameObject organ = GameObject.Find("organ final");
             GameObject scavenger = GameObject.Find("Scavenger");
             GameObject envelope = GameObject.Find("envelope");
 
-            // Maak start-anchors aan indien nodig
+            // Maak start-anchor aan indien nodig
             Transform kitchenAnchor = GetOrCreateAnchor("Kitchen_PlayerAnchor", new Vector3(-0.41f, 0.0f, -0.6f), Quaternion.identity);
-            Transform colonAnchor = GetOrCreateAnchor("Colon_PlayerAnchor", new Vector3(0.1f, 2.0f, 8.5f), Quaternion.identity);
 
             // Zorg dat de envelop de interactie-script heeft
             if (envelope != null)
@@ -99,77 +96,6 @@ namespace Oncologie.Core
                 var col = trashCan.GetComponent<BoxCollider>();
                 if (col == null) col = trashCan.AddComponent<BoxCollider>();
                 col.isTrigger = true;
-            }
-        }
-
-        private void SetupColon()
-        {
-            GameObject organ = GameObject.Find("organ final");
-            if (organ == null) return;
-
-            // Zorg voor InvertMesh zodat de speler binnenin kan staan
-            if (organ.GetComponent<InvertMesh>() == null)
-            {
-                organ.AddComponent<InvertMesh>();
-            }
-
-            var colonCtrl = organ.GetComponent<ColonExperienceController>();
-            if (colonCtrl == null)
-            {
-                colonCtrl = organ.AddComponent<ColonExperienceController>();
-            }
-
-            // Maak een kleine goedaardige poliep (placeholder bol met vleeskleur)
-            Transform existingPolyp = organ.transform.Find("Benign_Polyp");
-            if (existingPolyp == null)
-            {
-                GameObject polyp = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                polyp.name = "Benign_Polyp";
-                polyp.transform.SetParent(organ.transform);
-                polyp.transform.position = new Vector3(0.6f, 2.4f, 12.0f);
-                polyp.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-
-                // Zachte roze-rode kleur
-                var r = polyp.GetComponent<Renderer>();
-                if (r != null)
-                {
-                    Material m = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                    m.color = new Color(0.95f, 0.45f, 0.5f);
-                    m.SetFloat("_Smoothness", 0.7f);
-                    r.material = m;
-                }
-            }
-
-            // Zoek de kankertumor
-            GameObject cancer = GameObject.Find("cancer 1");
-            if (cancer != null)
-            {
-                cancer.transform.SetParent(organ.transform);
-                cancer.transform.position = new Vector3(0.6f, 2.4f, 12.0f);
-                cancer.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
-                cancer.SetActive(false);
-            }
-
-            // Maak een medisch lisje (snare)
-            Transform existingSnare = organ.transform.Find("Colonoscope_Snare");
-            if (existingSnare == null)
-            {
-                GameObject snare = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                snare.name = "Colonoscope_Snare";
-                snare.transform.SetParent(organ.transform);
-                snare.transform.position = new Vector3(0.6f, 2.7f, 12.0f);
-                snare.transform.localScale = new Vector3(0.04f, 0.2f, 0.04f);
-
-                var r = snare.GetComponent<Renderer>();
-                if (r != null)
-                {
-                    Material m = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                    m.color = new Color(0.85f, 0.9f, 0.95f);
-                    m.SetFloat("_Metallic", 0.9f);
-                    m.SetFloat("_Smoothness", 0.85f);
-                    r.material = m;
-                }
-                snare.SetActive(false);
             }
         }
 
