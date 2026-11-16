@@ -31,6 +31,26 @@ public class ColonWallMotion : MonoBehaviour
     [Tooltip("Hoe fijn de kleine bewegingen zijn (hoger = kleinere plekjes)")]
     public float twitchDetail = 2.5f;
 
+    [Header("Reactie op de speler")]
+    [Tooltip("De wand reageert op hoe de speler beweegt: rustiger bij stilstaan, levendiger onderweg, met een golf die de speler meeneemt")]
+    public bool reactToPlayer = true;
+    [Tooltip("Snelheid (m/s) waarbij het effect volledig is")]
+    public float referenceSpeed = 1f;
+    [Tooltip("Vermenigvuldiger van alle bewegingen als de speler stilstaat (1 = geen verschil)")]
+    [Range(0f, 1f)] public float idleCalm = 0.4f;
+    [Tooltip("Vermenigvuldiger van alle bewegingen bij volle snelheid")]
+    public float movingBoost = 1.6f;
+    [Tooltip("Amplitude (m) van de golf rond de speler bij volle snelheid")]
+    public float pushAmplitude = 0.03f;
+    [Tooltip("Afstand (m) tussen de toppen van die golf")]
+    public float pushLength = 2.5f;
+    [Tooltip("Tot hoever (m) vanaf de speler de golf merkbaar is")]
+    public float pushReach = 5f;
+    [Tooltip("Hoeveel sneller de toppen meebewegen dan de speler. Hoger = de wand lijkt je harder vooruit te duwen.")]
+    public float pushTravel = 1.5f;
+    [Tooltip("Hoe snel het effect aan- en uitgaat (seconden)")]
+    public float reactionTime = 0.6f;
+
     [Header("Performance")]
     [Tooltip("Alleen segmenten binnen deze afstand (m) van de speler bewegen")]
     public float activeRange = 10f;
@@ -47,6 +67,12 @@ public class ColonWallMotion : MonoBehaviour
 
     Segment[] segments;
     float nextUpdate;
+    float lastUpdateTime;
+    Vector3 lastHeadPos;
+    float lastPathDistance;
+    float activity;          // 0 = stilstaan, 1 = volle snelheid (vloeiend)
+    float pushDistance;      // opgetelde afgelegde afstand langs het pad, bepaalt de fase van de golf
+    bool haveLast;
 
     void Start()
     {
@@ -129,6 +155,29 @@ public class ColonWallMotion : MonoBehaviour
 
         Vector3 hp = head != null ? head.position : Vector3.zero;
         float t = Time.time;
+        float dt = Mathf.Max(0.001f, t - lastUpdateTime);
+        lastUpdateTime = t;
+
+        // --- hoe beweegt de speler? ---
+        float playerS = rider != null && rider.Ready ? rider.Distance : 0f;
+        float mult = 1f, push = 0f;
+        if (reactToPlayer && head != null)
+        {
+            if (haveLast)
+            {
+                float speed = (hp - lastHeadPos).magnitude / dt;
+                float target = Mathf.Clamp01(speed / Mathf.Max(0.01f, referenceSpeed));
+                activity = Mathf.Lerp(activity, target, 1f - Mathf.Exp(-dt / Mathf.Max(0.05f, reactionTime)));
+                pushDistance += (playerS - lastPathDistance) * pushTravel;
+            }
+            lastHeadPos = hp; lastPathDistance = playerS; haveLast = true;
+            mult = Mathf.Lerp(idleCalm, movingBoost, activity);
+            push = pushAmplitude * activity;
+        }
+        float kp = 2f * Mathf.PI / Mathf.Max(0.1f, pushLength);
+        float sigma = Mathf.Max(0.5f, pushReach * 0.5f);
+        float inv2s2 = 1f / (2f * sigma * sigma);
+        float cutoff = 3f * sigma;
         float k1 = 2f * Mathf.PI / Mathf.Max(0.1f, waveLength);
         float w1 = k1 * waveSpeed;
         float k2 = k1 / 0.37f;     // kortere golfjes (haustra)
@@ -149,6 +198,13 @@ public class ColonWallMotion : MonoBehaviour
                 float s = seg.s[i];
                 float a = waveAmplitude * (Mathf.Sin(k1 * s - w1 * t) + 0.5f * Mathf.Sin(k2 * s + 1.7f * t * 0.25f))
                         + twitchAmplitude * Mathf.Sin(seg.pa[i] + tw * t) * Mathf.Sin(seg.pb[i] - 0.6f * tw * t);
+                a *= mult;
+                if (push > 0.0001f)
+                {
+                    float ds = s - playerS;
+                    if (ds > -cutoff && ds < cutoff)
+                        a += push * Mathf.Exp(-ds * ds * inv2s2) * Mathf.Sin(kp * (s - pushDistance));
+                }
                 w[i] = b[i] + d[i] * a;
             }
             seg.mesh.vertices = w;

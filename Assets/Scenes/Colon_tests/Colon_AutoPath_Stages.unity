@@ -582,6 +582,15 @@ MonoBehaviour:
   twitchAmplitude: 0.012
   twitchSpeed: 0.9
   twitchDetail: 2.5
+  reactToPlayer: 1
+  referenceSpeed: 1
+  idleCalm: 0.4
+  movingBoost: 1.6
+  pushAmplitude: 0.03
+  pushLength: 2.5
+  pushReach: 5
+  pushTravel: 1.5
+  reactionTime: 0.6
   activeRange: 10
   updatesPerSecond: 30
 --- !u!1 &196726234
