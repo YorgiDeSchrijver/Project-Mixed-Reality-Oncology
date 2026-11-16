@@ -1,694 +1,429 @@
 using System.Collections;
+using Oncologie.Dialogue;
+using Oncologie.IRL;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Oncologie.Core
 {
     public enum ExperienceState
     {
-        KitchenIntro,
+        Intro,
+        Candles,
+        Explore,
+        Envelope,
+        Choice,
         TransitionToColon,
-        ColonDarmwandeling,
-        KitchenOutro
+        Outro
     }
 
     public enum ScreeningChoice
     {
         None,
-        IgnoredTrash,   // Optie A: In de prullenmand gegooid / negeren
-        InsistedKeys    // Optie B: Aan vader Luc gegeven / aandringen
+        IgnoredTrash,   // Envelop genegeerd / weggegooid
+        InsistedKeys    // Envelop aan Luc gegeven (aangedrongen)
     }
 
     /// <summary>
-    /// Centrale regisseur van de Oncologie Darmkanker VR Experience.
-    /// Beheert de flow in de IRL-keukenscène: intro -> keuze -> (scene load naar darm) -> outro.
-    /// De darm zit in een aparte scène; overschakelen gebeurt via <see cref="SceneFlow"/>.
+    /// Regisseur van de IRL-keukenscène:
+    /// intro → kaarsjes aansteken → rondkijken → envelop van de koelkast → keuze → transitie naar de darm,
+    /// en na terugkeer uit de darm het passende einde met de "klok terugdraaien"-optie.
+    /// Elke stap heeft een fallback zodat het verhaal ook doorloopt als de speler niets doet.
     /// </summary>
     public class ExperienceFlowManager : MonoBehaviour
     {
         public static ExperienceFlowManager Instance { get; private set; }
 
-        [Header("Huidige Status")]
-        [SerializeField] private ExperienceState currentState = ExperienceState.KitchenIntro;
-        [SerializeField] private ScreeningChoice playerChoice = ScreeningChoice.None;
-        public ExperienceState CurrentState => currentState;
-        public ScreeningChoice PlayerChoice => playerChoice;
-        public ScreeningChoice GetPlayerChoice() => playerChoice;
+        [Header("Personages & interactie")]
+        public LucCharacter luc;
+        public EnvelopeItem envelope;
+        public LighterItem lighter;
+        public CandleSet candles;
+        public DropZone lucZone;
+        public DropZone trashZone;
+        public LookAtTrigger marcCard;
+        public ColonTransition transition;
+        public ClickableObject rewindClock;
+        public Highlighter rewindClockHighlight;
 
-        [Header("Locaties (Camera / Speler Transforms)")]
-        [SerializeField] private Transform playerTransform;
-        [SerializeField] private Transform kitchenPlayerAnchor;
+        [Header("Sets (aan/uit per moment)")]
+        public GameObject setBirthday;
+        public GameObject setGrey;
+        public GameObject setFuture;
+        public GameObject infoCard;
 
-        [Header("Omgevingen (GameObjects)")]
-        [SerializeField] private GameObject kitchenEnvironment;
+        [Header("Licht")]
+        public Light sun;
+        public Light ceilingLamp;
+        public Color warmSun = new Color(1f, 0.93f, 0.8f);
+        public Color greySun = new Color(0.62f, 0.68f, 0.8f);
 
-        [Header("Visuele Feedback & Belichting")]
-        [SerializeField] private Light kitchenDirectionalLight;
-        [SerializeField] private Color warmSunlightColor = new Color(1f, 0.94f, 0.82f);
-        [SerializeField] private Color coldGrievingColor = new Color(0.55f, 0.65f, 0.85f);
-        [SerializeField] private GreyscaleTransition greyscaleTransition;
-
-        [Header("Personages & Props in Keuken")]
-        [SerializeField] private GameObject fatherCharacter;
-        [SerializeField] private GameObject motherCharacter;
-        [SerializeField] private GameObject hospitalBraceletPhoto;
-
-        [Header("UI & Ondertiteling")]
-        [SerializeField] private Text subtitleText;
-        [SerializeField] private GameObject outroPanel;
-        [SerializeField] private RawImage outroCardImage;
-        [SerializeField] private Texture2D goodEndingCardTexture;
-        [SerializeField] private Texture2D badEndingCardTexture;
-        [SerializeField] private GameObject rewindSystem;
+        [Header("Timing (seconden)")]
+        public float candleReminderAfter = 22f;
+        public float candleFallbackAfter = 45f;
+        public float exploreTime = 10f;
+        public float envelopeReminderAfter = 25f;
+        public float envelopeFallbackAfter = 55f;
+        public float choiceFallbackAfter = 50f;
 
         [Header("Events")]
-        public UnityEvent onExperienceStarted;
         public UnityEvent<ScreeningChoice> onChoiceMade;
-        public UnityEvent onColonEntered;
         public UnityEvent onOutroReached;
 
-        private Coroutine _subtitleCoroutine;
-        private string _currentSubtitle = "";
-        private bool _showDebugMenu = true;
+        [SerializeField] private ExperienceState currentState = ExperienceState.Intro;
+        [SerializeField] private ScreeningChoice playerChoice = ScreeningChoice.None;
+
+        public ExperienceState CurrentState => currentState;
+        public ScreeningChoice PlayerChoice => playerChoice;
+
+        private Coroutine _mainRoutine;
+        private bool _marcSeen, _letterCommented;
+        private bool _showDebug;
+
+        private bool VR => PlayerRigSelector.IsVR;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
             Instance = this;
+        }
 
-            EnsureAllReferences();
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         private void Start()
         {
-            EnsureAllReferences();
+            if (SubtitleUI.Instance != null) WorldUI.MakeOverlay(SubtitleUI.Instance.GetComponentInParent<Canvas>());
+            if (envelope != null)
+            {
+                envelope.DeliveredTo += OnEnvelopeDelivered;
+                envelope.LetterOpened += OnLetterOpened;
+            }
+            if (marcCard != null) marcCard.Looked += () => _marcSeen = true;
+            if (rewindClock != null) rewindClock.onClicked.AddListener(RewindTime);
 
-            // Terug uit de darmscène? Ga dan meteen naar het juiste einde.
             if (SceneFlow.ReturningFromColon)
             {
                 var choice = SceneFlow.PlayerChoice;
                 SceneFlow.ConsumeReturn();
-                if (choice == ScreeningChoice.InsistedKeys) TeleportToKitchenOutroGood();
-                else TeleportToKitchenOutroBad();
-                return;
-            }
-
-            StartKitchenIntro();
-        }
-
-        public void EnsureAllReferences()
-        {
-            // 1. Speler transform (ondersteunt zowel XR Origin VR Rig als Test Player)
-            if (playerTransform == null || !playerTransform.gameObject.activeInHierarchy)
-            {
-                var xr = FindAnyObjectByType<Unity.XR.CoreUtils.XROrigin>();
-                if (xr != null && xr.gameObject.activeInHierarchy)
-                {
-                    playerTransform = xr.transform;
-                }
-                else
-                {
-                    var player = FindAnyObjectByType<SampleSceneTestPlayer>();
-                    if (player != null && player.gameObject.activeInHierarchy) playerTransform = player.transform;
-                    else
-                    {
-                        var pGO = GameObject.Find("Test Player");
-                        if (pGO != null && pGO.activeInHierarchy) playerTransform = pGO.transform;
-                        else if (Camera.main != null) playerTransform = Camera.main.transform;
-                    }
-                }
-            }
-
-            // 2. Anchors
-            if (kitchenPlayerAnchor == null)
-            {
-                var ka = GameObject.Find("Kitchen_PlayerAnchor");
-                if (ka != null) kitchenPlayerAnchor = ka.transform;
-            }
-
-            // 3. Omgevingen
-            if (kitchenEnvironment == null)
-            {
-                kitchenEnvironment = GameObject.Find("kitchen");
-            }
-
-            // 4. Luc
-            if (fatherCharacter == null)
-            {
-                fatherCharacter = GameObject.Find("Scavenger");
-            }
-
-            // 5. Belichting
-            if (kitchenDirectionalLight == null)
-            {
-                var sun = GameObject.Find("Directional Light (Sunlight)");
-                if (sun != null) kitchenDirectionalLight = sun.GetComponent<Light>();
-                else
-                {
-                    var lights = FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-                    foreach (var l in lights)
-                    {
-                        if (l.type == LightType.Directional) { kitchenDirectionalLight = l; break; }
-                    }
-                }
-            }
-
-            // 6. Rewind System
-            if (rewindSystem == null)
-            {
-                var rw = GameObject.Find("Rewind_System");
-                if (rw != null) rewindSystem = rw;
-                else
-                {
-                    var sceneRoots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-                    foreach (var r in sceneRoots)
-                    {
-                        if (r.name == "Rewind_System" || r.name == "Rewind_Clock_Object")
-                        {
-                            rewindSystem = r;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        private void Update()
-        {
-            // Sneltoetsen voor Desktop testers en docenten
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                MakeChoice(ScreeningChoice.IgnoredTrash);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                MakeChoice(ScreeningChoice.InsistedKeys);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                GoToColon();
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha4))
-            {
-                TeleportToKitchenOutroBad();
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
-            {
-                TeleportToKitchenOutroGood();
-            }
-            else if (Input.GetKeyDown(KeyCode.R))
-            {
-                RewindTime();
-            }
-            else if (Input.GetKeyDown(KeyCode.Tab))
-            {
-                _showDebugMenu = !_showDebugMenu;
-            }
-        }
-
-        // ==========================================
-        // SCÈNE 1: KEUKEN INTRO
-        // ==========================================
-
-        public void StartKitchenIntro()
-        {
-            EnsureAllReferences();
-            currentState = ExperienceState.KitchenIntro;
-            playerChoice = ScreeningChoice.None;
-
-            if (kitchenEnvironment != null) kitchenEnvironment.SetActive(true);
-            if (outroPanel != null) outroPanel.SetActive(false);
-            if (rewindSystem != null) rewindSystem.SetActive(false);
-            ApplyKitchenLighting();
-
-            if (fatherCharacter != null)
-            {
-                fatherCharacter.SetActive(true);
-                var anim = fatherCharacter.GetComponent<Animator>();
-                if (anim != null)
-                {
-                    anim.speed = 0f;
-                    anim.Play("New State", 0, 0.15f);
-                }
-            }
-
-            if (hospitalBraceletPhoto != null) hospitalBraceletPhoto.SetActive(false);
-
-            if (kitchenDirectionalLight != null)
-            {
-                kitchenDirectionalLight.color = warmSunlightColor;
-                kitchenDirectionalLight.intensity = 1.25f;
-            }
-
-            if (greyscaleTransition != null)
-            {
-                greyscaleTransition.FadeToColor();
-            }
-
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.StopHeartbeat();
-                AudioManager.Instance.StopAmbience();
-            }
-
-            // Teleporteer speler naar de keukentafel
-            Vector3 kPos = kitchenPlayerAnchor != null ? kitchenPlayerAnchor.position : new Vector3(-0.41f, 0.0f, -0.6f);
-            Quaternion kRot = kitchenPlayerAnchor != null ? kitchenPlayerAnchor.rotation : Quaternion.identity;
-            TeleportPlayer(kPos, kRot);
-
-            // Reset brief positie op tafel
-            var env = GameObject.Find("envelope");
-            if (env == null)
-            {
-                var sceneRoots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-                foreach (var r in sceneRoots)
-                {
-                    if (r.name == "envelope") { env = r; break; }
-                }
-            }
-            if (env != null)
-            {
-                env.SetActive(true);
-                var kit = env.GetComponent<ScreeningKitInteraction>();
-                if (kit != null) kit.ResetPosition();
-                else
-                {
-                    env.transform.position = new Vector3(-0.41f, 1.54f, 0.90f);
-                    env.transform.rotation = Quaternion.Euler(0f, 15f, 0f);
-                }
-            }
-
-            // Dialoog Luc
-            if (Oncologie.Dialogue.DialogueManager.Instance != null)
-            {
-                Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Intro_Keuken");
+                _mainRoutine = StartCoroutine(OutroFlow(choice));
             }
             else
             {
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucIntro, "Vader Luc");
-                }
-                ShowSubtitle("Vader Luc: \"Kijk nu, alweer zo'n envelop voor die stoelgangtest... Ik voel me kerngezond, ik doe dat volgend jaar wel.\"", 6.5f);
+                _mainRoutine = StartCoroutine(IntroFlow());
             }
-
-            onExperienceStarted?.Invoke();
         }
 
-        // ==========================================
-        // KEUZEMOMENT
-        // ==========================================
+        // =====================================================================
+        // DEEL 1: DE VERJAARDAG
+        // =====================================================================
 
-        public void MakeChoice(ScreeningChoice choice)
+        private IEnumerator IntroFlow()
         {
-            if (currentState != ExperienceState.KitchenIntro)
-                return;
+            SetState(ExperienceState.Intro);
+            ApplySet(birthday: true, grey: false, future: false);
+            SetDaylight(true);
+            if (envelope != null) envelope.SetInteractable(false);
+            if (rewindClock != null) rewindClock.SetClickable(false);
+            if (infoCard != null) infoCard.SetActive(false);
+            if (marcCard != null) marcCard.armed = false;
 
+            ScreenFader.Instance.SetImmediate(1f);
+            yield return new WaitForSeconds(0.5f);
+            yield return ScreenFader.Instance.Fade(0f, 2.5f);
+            yield return Seq("Intro");
+
+            // --- Kaarsjes aansteken ---
+            SetState(ExperienceState.Candles);
+            if (lighter != null) { lighter.SetInteractable(true); lighter.ShowHint(true); }
+            HintDisplay.Show(VR
+                ? "Grijp de aansteker (grip-knop) en houd het vlammetje bij elk kaarsje."
+                : "Klik op de aansteker om hem te pakken en houd het vlammetje bij de kaarsjes.  (scrollwiel = dichter/verder)");
+
+            float t = 0; bool reminded = false;
+            while (candles != null && !candles.AllAreLit)
+            {
+                t += Time.deltaTime;
+                if (!reminded && t > candleReminderAfter) { reminded = true; Say("Kaarsjes_Herinnering"); }
+                if (t > candleFallbackAfter)
+                {
+                    HintDisplay.Hide();
+                    yield return Seq("Kaarsjes_ZelfDoen");
+                    candles.LightAll();
+                    break;
+                }
+                yield return null;
+            }
+            HintDisplay.Hide();
+            if (lighter != null) { lighter.ShowHint(false); lighter.ForceRelease(); lighter.SetInteractable(false); }
+            yield return Seq("Kaarsjes_Klaar");
+
+            // --- Rondkijken (rouwkaartje van Marc) ---
+            SetState(ExperienceState.Explore);
+            if (marcCard != null) marcCard.armed = true;
+            t = 0;
+            while (t < exploreTime && !_marcSeen) { t += Time.deltaTime; yield return null; }
+            if (_marcSeen) yield return Seq("Marc");
+
+            // --- De envelop ---
+            yield return Seq("Envelop_Intro");
+            SetState(ExperienceState.Envelope);
+            if (envelope != null) { envelope.SetInteractable(true); envelope.ShowHint(true); }
+            HintDisplay.Show(VR
+                ? "Ga naar de koelkast en grijp de envelop."
+                : "Loop naar de koelkast (WASD) en klik op de envelop.");
+
+            t = 0; reminded = false;
+            while (envelope != null && !envelope.HasBeenGrabbed)
+            {
+                t += Time.deltaTime;
+                if (_marcSeen && marcCard != null && marcCard.armed) { marcCard.armed = false; yield return Seq("Marc"); }
+                if (!reminded && t > envelopeReminderAfter) { reminded = true; Say("Envelop_Herinnering"); }
+                if (t > envelopeFallbackAfter)
+                {
+                    HintDisplay.Hide();
+                    envelope.ShowHint(false);
+                    envelope.SetInteractable(false);
+                    yield return ChoiceFlow(ScreeningChoice.IgnoredTrash, "Keuze_A_Niets");
+                    yield break;
+                }
+                yield return null;
+            }
+
+            // --- Envelop vast: keuze maken ---
+            if (lucZone != null) lucZone.Armed = true;
+            if (trashZone != null) trashZone.Armed = true;
+            HintDisplay.Show(VR
+                ? "Trigger = brief lezen.  Geef de envelop aan Luc (houd hem bij zijn hand) of gooi hem in de vuilbak."
+                : "E / rechtermuis = brief lezen.  Houd de envelop bij Luc's hand om hem te geven, of boven de vuilbak om hem weg te gooien.");
+            yield return Seq("Envelop_Gepakt");
+
+            t = 0;
+            while (envelope != null && !envelope.Delivered)
+            {
+                t += Time.deltaTime;
+                if (t > choiceFallbackAfter)
+                {
+                    yield return Seq("Keuze_Timeout");
+                    if (!envelope.Delivered && trashZone != null) envelope.DeliverTo(trashZone);
+                    break;
+                }
+                yield return null;
+            }
+            // Verder in OnEnvelopeDelivered → ChoiceFlow
+        }
+
+        private void OnLetterOpened()
+        {
+            if (_letterCommented || currentState != ExperienceState.Envelope) return;
+            _letterCommented = true;
+            StartCoroutine(SayWhenFree("Brief_Gelezen"));
+        }
+
+        private void OnEnvelopeDelivered(ScreeningChoice choice)
+        {
+            if (currentState == ExperienceState.Choice || currentState == ExperienceState.TransitionToColon) return;
+            if (_mainRoutine != null) StopCoroutine(_mainRoutine);
+            _mainRoutine = StartCoroutine(ChoiceFlow(choice, choice == ScreeningChoice.InsistedKeys ? "Keuze_B_Aandringen" : "Keuze_A_Negeren"));
+        }
+
+        private IEnumerator ChoiceFlow(ScreeningChoice choice, string sequence)
+        {
+            SetState(ExperienceState.Choice);
             playerChoice = choice;
-            onChoiceMade?.Invoke(playerChoice);
+            HintDisplay.Hide();
+            if (lucZone != null) lucZone.Armed = false;
+            if (trashZone != null) trashZone.Armed = false;
+            if (DialogueManager.Instance != null) DialogueManager.Instance.StopCurrent();
+            onChoiceMade?.Invoke(choice);
 
-            if (playerChoice == ScreeningChoice.IgnoredTrash)
-            {
-                if (Oncologie.Dialogue.DialogueManager.Instance != null)
-                {
-                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Keuze_A_Negeren");
-                }
-                else
-                {
-                    if (AudioManager.Instance != null)
-                    {
-                        AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucTrash, "Vader Luc");
-                    }
-                    ShowSubtitle("Vader Luc: \"Zo, in de prullenmand. Geen zorgen maken om niks!\"", 3.5f);
-                }
-            }
-            else
-            {
-                if (Oncologie.Dialogue.DialogueManager.Instance != null)
-                {
-                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Keuze_B_Aandringen");
-                }
-                else
-                {
-                    if (AudioManager.Instance != null)
-                    {
-                        AudioManager.Instance.PlayVoice(AudioManager.Instance.voiceLucKeys, "Vader Luc");
-                    }
-                    ShowSubtitle("Vader Luc: \"Allee vooruit, omdat jij zo aandringt. Morgenochtend doe ik hem meteen.\"", 3.5f);
-                }
-            }
-
-            StartCoroutine(StartCinematicTransitionToColon());
+            yield return Seq(sequence);
+            yield return new WaitForSeconds(0.6f);
+            GoToColon();
         }
 
-        private IEnumerator StartCinematicTransitionToColon()
-        {
-            // Laat de keuze dialoog 2.5 seconden bezinken
-            yield return new WaitForSeconds(2.5f);
+        // =====================================================================
+        // DEEL 2: NAAR DE DARM
+        // =====================================================================
 
-            currentState = ExperienceState.TransitionToColon;
-
-            if (CinematicTransitionDirector.Instance != null)
-            {
-                // Scherm is volledig donker wanneer de callback komt -> dan pas de darmscène laden.
-                CinematicTransitionDirector.Instance.PlayShrinkToColonCutscene(GoToColon);
-            }
-            else
-            {
-                if (AudioManager.Instance != null) AudioManager.Instance.PlayWhoosh();
-                yield return new WaitForSeconds(1.5f);
-                GoToColon();
-            }
-        }
-
-        // ==========================================
-        // NAAR DE DARMSCÈNE (aparte scène)
-        // ==========================================
-
-        /// <summary>Laadt de darmscène. De keuze gaat mee via SceneFlow; bij het einde van de rit keert de speler terug.</summary>
+        /// <summary>Start de (uitgebreide) transitie en laadt daarna de darmscène.</summary>
         public void GoToColon()
         {
-            StopAllCoroutines();
+            if (currentState == ExperienceState.TransitionToColon) return;
             if (playerChoice == ScreeningChoice.None) playerChoice = ScreeningChoice.IgnoredTrash;
-            currentState = ExperienceState.TransitionToColon;
-            onColonEntered?.Invoke();
-            SceneFlow.LoadColon(playerChoice);
+            SetState(ExperienceState.TransitionToColon);
+            HintDisplay.Hide();
+            var choice = playerChoice;
+            if (transition != null) transition.Play(() => SceneFlow.LoadColon(choice));
+            else SceneFlow.LoadColon(choice);
         }
 
-        // ==========================================
-        // SCÈNE 4: KEUKEN GEVOLGEN (EINDE)
-        // ==========================================
+        // =====================================================================
+        // DEEL 3: HET EINDE
+        // =====================================================================
 
-        public void TeleportToKitchenOutroBad()
+        private IEnumerator OutroFlow(ScreeningChoice choice)
         {
-            EnsureAllReferences();
-            StopAllCoroutines();
+            SetState(ExperienceState.Outro);
+            playerChoice = choice;
+            bool good = choice == ScreeningChoice.InsistedKeys;
 
-            playerChoice = ScreeningChoice.IgnoredTrash;
-            currentState = ExperienceState.KitchenOutro;
+            ScreenFader.Instance.SetImmediate(1f);
+            ApplySet(birthday: false, grey: !good, future: good);
+            if (envelope != null) envelope.gameObject.SetActive(false);
+            if (lighter != null) lighter.gameObject.SetActive(false);
+            if (candles != null) candles.ExtinguishAll();
+            if (luc != null) luc.gameObject.SetActive(good);
+            if (infoCard != null) infoCard.SetActive(false);
+            SetDaylight(good);
+            if (!good) EnableGreyGrade();
 
-            if (kitchenEnvironment != null) kitchenEnvironment.SetActive(true);
-            ApplyKitchenLighting();
+            yield return new WaitForSeconds(0.6f);
+            yield return ScreenFader.Instance.ShowTitle(good ? "Twee jaar later" : "Drie jaar later",
+                                                        good ? "Luc wordt 60." : "Dezelfde keuken.", 2.6f);
+            yield return ScreenFader.Instance.Fade(0f, 2.5f);
+            yield return new WaitForSeconds(good ? 0.5f : 2.5f); // in het slechte einde: eerst de stilte laten spreken
+            yield return Seq(good ? "Einde_Goed" : "Einde_Slecht");
 
-            Vector3 kPos = kitchenPlayerAnchor != null ? kitchenPlayerAnchor.position : new Vector3(-0.41f, 0f, -0.6f);
-            TeleportPlayer(kPos, Quaternion.identity);
-
-            SetupOutroScene(ScreeningChoice.IgnoredTrash);
-        }
-
-        public void TeleportToKitchenOutroGood()
-        {
-            EnsureAllReferences();
-            StopAllCoroutines();
-
-            playerChoice = ScreeningChoice.InsistedKeys;
-            currentState = ExperienceState.KitchenOutro;
-
-            if (kitchenEnvironment != null) kitchenEnvironment.SetActive(true);
-            ApplyKitchenLighting();
-
-            Vector3 kPos = kitchenPlayerAnchor != null ? kitchenPlayerAnchor.position : new Vector3(-0.41f, 0f, -0.6f);
-            TeleportPlayer(kPos, Quaternion.identity);
-
-            SetupOutroScene(ScreeningChoice.InsistedKeys);
-        }
-
-        private void SetupOutroScene(ScreeningChoice choice)
-        {
-            EnsureAllReferences();
-            if (outroPanel != null) outroPanel.SetActive(true);
-            if (rewindSystem != null) rewindSystem.SetActive(true);
-
-            // Verberg de envelop tijdens het einde (die is jaren geleden al verzonden/weggegooid)
-            var env = GameObject.Find("envelope");
-            if (env != null) env.SetActive(false);
-
-            if (choice == ScreeningChoice.IgnoredTrash)
-            {
-                // SLECHT EINDE: Vader Luc is afwezig
-                if (fatherCharacter != null) fatherCharacter.SetActive(false);
-                if (hospitalBraceletPhoto != null) hospitalBraceletPhoto.SetActive(true);
-
-                if (kitchenDirectionalLight != null)
-                {
-                    kitchenDirectionalLight.color = coldGrievingColor;
-                    kitchenDirectionalLight.intensity = 0.45f;
-                }
-
-                if (greyscaleTransition != null)
-                {
-                    greyscaleTransition.FadeToGreyscale();
-                }
-
-                if (outroCardImage != null && badEndingCardTexture != null)
-                {
-                    outroCardImage.texture = badEndingCardTexture;
-                }
-
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.PlayAmbience(false);
-                }
-
-                // Pas tekst op 3D kaart aan voor slecht einde
-                if (rewindSystem != null)
-                {
-                    var sub = rewindSystem.transform.Find("Rewind_Card_Canvas/Subtitle_Text");
-                    if (sub != null)
-                    {
-                        var t = sub.GetComponent<UnityEngine.UI.Text>();
-                        if (t != null) t.text = "Darmkanker geeft pas laat merkbare klachten.\nWachten kost levens. Vroege opsporing redt levens!";
-                    }
-                }
-
-                if (Oncologie.Dialogue.DialogueManager.Instance != null)
-                {
-                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Einde_Slecht");
-                }
-                else
-                {
-                    ShowSubtitle("Darmkanker geeft pas laat klachten. Wacht niet tot het te laat is. Spoel de tijd terug.", 6.0f);
-                }
-            }
-            else
-            {
-                // GOED EINDE: Vader Luc is gezond en aanwezig
-                if (fatherCharacter != null) fatherCharacter.SetActive(true);
-                if (hospitalBraceletPhoto != null) hospitalBraceletPhoto.SetActive(false);
-
-                if (kitchenDirectionalLight != null)
-                {
-                    kitchenDirectionalLight.color = warmSunlightColor;
-                    kitchenDirectionalLight.intensity = 1.35f;
-                }
-
-                if (greyscaleTransition != null)
-                {
-                    greyscaleTransition.FadeToColor();
-                }
-
-                if (outroCardImage != null && goodEndingCardTexture != null)
-                {
-                    outroCardImage.texture = goodEndingCardTexture;
-                }
-
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.PlayAmbience(true);
-                }
-
-                // Pas tekst op 3D kaart aan voor goed einde
-                if (rewindSystem != null)
-                {
-                    var sub = rewindSystem.transform.Find("Rewind_Card_Canvas/Subtitle_Text");
-                    if (sub != null)
-                    {
-                        var t = sub.GetComponent<UnityEngine.UI.Text>();
-                        if (t != null) t.text = "Geweldig gedaan! Dankzij jouw aandringen werd de poliep op tijd gevonden.\nVader Luc is kankervrij en kerngezond!";
-                    }
-                }
-
-                if (Oncologie.Dialogue.DialogueManager.Instance != null)
-                {
-                    Oncologie.Dialogue.DialogueManager.Instance.PlaySequence("Einde_Goed");
-                }
-                else
-                {
-                    ShowSubtitle("Vroege opsporing redt levens. De poliep werd tijdig verwijderd. Luc is kerngezond!", 6.0f);
-                }
-            }
-
+            if (infoCard != null) infoCard.SetActive(true);
+            if (rewindClock != null) rewindClock.SetClickable(true);
+            if (rewindClockHighlight != null) rewindClockHighlight.Set(true);
+            HintDisplay.Show(good
+                ? (VR ? "Grijp de klok aan de muur om het verhaal opnieuw te beleven." : "Klik op de klok aan de muur om het verhaal opnieuw te beleven.")
+                : (VR ? "Grijp de klok aan de muur om de tijd terug te draaien en opnieuw te kiezen." : "Klik op de klok aan de muur om de tijd terug te draaien en opnieuw te kiezen."));
             onOutroReached?.Invoke();
         }
 
+        /// <summary>Draait de tijd terug: begint opnieuw bij de verjaardag.</summary>
         public void RewindTime()
         {
+            if (currentState == ExperienceState.TransitionToColon) return;
             StopAllCoroutines();
-            EnsureAllReferences();
+            StartCoroutine(RewindRoutine());
+        }
 
+        private IEnumerator RewindRoutine()
+        {
+            HintDisplay.Hide();
+            if (rewindClock != null) rewindClock.SetClickable(false);
+            if (AudioManager.Instance != null) AudioManager.Instance.PlayWhoosh();
+            yield return ScreenFader.Instance.Fade(1f, 1.2f, Color.white);
             SceneFlow.ResetSession();
-
-            StartKitchenIntro();
+            SceneFlow.ReloadIrl();
         }
 
-        // ==========================================
-        // ONDERTITELING
-        // ==========================================
+        // =====================================================================
+        // HULPFUNCTIES
+        // =====================================================================
 
-        public void ShowSubtitle(string message, float duration = 4.0f)
+        private void SetState(ExperienceState s) => currentState = s;
+
+        private void ApplySet(bool birthday, bool grey, bool future)
         {
-            _currentSubtitle = message;
-
-            if (subtitleText != null)
-            {
-                subtitleText.text = message;
-                subtitleText.gameObject.SetActive(true);
-            }
-
-            if (Oncologie.Dialogue.SubtitleUI.Instance != null)
-            {
-                string speaker = "Verteller";
-                Color speakerColor = new Color(1f, 0.82f, 0.35f);
-                string body = message;
-                int colonIdx = message.IndexOf(':');
-                if (colonIdx > 0 && colonIdx < 25)
-                {
-                    speaker = message.Substring(0, colonIdx).Trim(' ', '"');
-                    body = message.Substring(colonIdx + 1).Trim(' ', '"');
-                    if (speaker.ToLower().Contains("luc")) speakerColor = new Color(0.35f, 0.78f, 1f);
-                    else if (speaker.ToLower().Contains("jij")) speakerColor = Color.white;
-                }
-                Oncologie.Dialogue.SubtitleUI.Instance.DisplayLine(new Oncologie.Dialogue.DialogueLine(speaker, speakerColor, body, duration));
-            }
-
-            if (_subtitleCoroutine != null) StopCoroutine(_subtitleCoroutine);
-            _subtitleCoroutine = StartCoroutine(SubtitleRoutine(duration));
+            if (setBirthday != null) setBirthday.SetActive(birthday);
+            if (setGrey != null) setGrey.SetActive(grey);
+            if (setFuture != null) setFuture.SetActive(future);
         }
 
-        private IEnumerator SubtitleRoutine(float duration)
+        private void SetDaylight(bool warm)
         {
-            yield return new WaitForSeconds(duration);
-            _currentSubtitle = "";
-            if (subtitleText != null) subtitleText.text = "";
-            if (Oncologie.Dialogue.SubtitleUI.Instance != null)
-            {
-                Oncologie.Dialogue.SubtitleUI.Instance.ClearSubtitle();
-            }
+            if (sun != null) { sun.color = warm ? warmSun : greySun; sun.intensity = warm ? 1.3f : 0.55f; }
+            if (ceilingLamp != null) ceilingLamp.intensity = warm ? ceilingLamp.intensity : ceilingLamp.intensity * 0.5f;
         }
 
-        private void ApplyKitchenLighting()
+        private void EnableGreyGrade()
         {
-            if (kitchenDirectionalLight != null)
-            {
-                kitchenDirectionalLight.enabled = true;
-                kitchenDirectionalLight.color = warmSunlightColor;
-            }
-            RenderSettings.fog = false;
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                cam.clearFlags = CameraClearFlags.Skybox;
-            }
+            var vol = gameObject.AddComponent<Volume>();
+            vol.isGlobal = true;
+            vol.priority = 50;
+            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            var ca = profile.Add<ColorAdjustments>(true);
+            ca.saturation.Override(-80f);
+            ca.postExposure.Override(-0.35f);
+            ca.colorFilter.Override(new Color(0.88f, 0.92f, 1f));
+            vol.profile = profile;
         }
 
-        private void TeleportPlayer(Vector3 targetPosition, Quaternion targetRotation)
+        private IEnumerator Seq(string key)
         {
-            EnsureAllReferences();
-            if (playerTransform == null) return;
-
-            var testPlayer = playerTransform.GetComponent<SampleSceneTestPlayer>();
-            if (testPlayer != null)
-            {
-                testPlayer.Teleport(targetPosition, targetRotation);
-                return;
-            }
-
-            var cc = playerTransform.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false;
-
-            playerTransform.SetPositionAndRotation(targetPosition, targetRotation);
-
-            if (cc != null) cc.enabled = true;
+            var dm = DialogueManager.Instance;
+            if (dm == null) yield break;
+            bool done = false;
+            float max = dm.GetDuration(key) + 2f;
+            dm.PlaySequence(key, () => done = true);
+            float t = 0;
+            while (!done && t < max) { t += Time.deltaTime; yield return null; }
         }
 
-        // ==========================================
-        // ONGUI TEST HUD & ONDERTITELING
-        // ==========================================
+        private void Say(string key)
+        {
+            if (DialogueManager.Instance != null) DialogueManager.Instance.PlaySequence(key);
+        }
+
+        private IEnumerator SayWhenFree(string key)
+        {
+            var dm = DialogueManager.Instance;
+            if (dm == null) yield break;
+            float t = 0;
+            while (dm.IsPlaying && t < 8f) { t += Time.deltaTime; yield return null; }
+            if (currentState == ExperienceState.Envelope && !dm.IsPlaying) dm.PlaySequence(key);
+        }
+
+        // =====================================================================
+        // TESTEN OP DESKTOP (Tab = menu)
+        // =====================================================================
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Tab)) _showDebug = !_showDebug;
+            if (!_showDebug) return;
+            if (Input.GetKeyDown(KeyCode.Alpha1)) DebugChoose(ScreeningChoice.IgnoredTrash);
+            if (Input.GetKeyDown(KeyCode.Alpha2)) DebugChoose(ScreeningChoice.InsistedKeys);
+            if (Input.GetKeyDown(KeyCode.Alpha3)) SceneFlow.LoadOutro(ScreeningChoice.IgnoredTrash);
+            if (Input.GetKeyDown(KeyCode.Alpha4)) SceneFlow.LoadOutro(ScreeningChoice.InsistedKeys);
+            if (Input.GetKeyDown(KeyCode.Alpha5)) { SceneFlow.ResetSession(); SceneFlow.ReloadIrl(); }
+            if (Input.GetKeyDown(KeyCode.Alpha6)) SkipToEnvelope();
+        }
+
+        private void DebugChoose(ScreeningChoice c)
+        {
+            if (currentState >= ExperienceState.Choice) return;
+            if (envelope != null && !envelope.Delivered)
+            {
+                envelope.SetInteractable(true);
+                var zone = c == ScreeningChoice.InsistedKeys ? lucZone : trashZone;
+                if (zone != null) { envelope.DeliverTo(zone); return; }
+            }
+            OnEnvelopeDelivered(c);
+        }
+
+        private void SkipToEnvelope()
+        {
+            if (currentState >= ExperienceState.Envelope) return;
+            if (candles != null) candles.LightAll();
+            if (DialogueManager.Instance != null) DialogueManager.Instance.StopCurrent();
+            exploreTime = 0f;
+        }
 
         private void OnGUI()
         {
-            // 1. Ondertitelingsbalk onderaan het scherm
-            if (!string.IsNullOrEmpty(_currentSubtitle))
+            if (VR) return;
+            if (!_showDebug)
             {
-                GUI.skin.box.fontSize = 17;
-                GUI.skin.box.wordWrap = true;
-                GUI.skin.box.alignment = TextAnchor.MiddleCenter;
-
-                float boxWidth = Mathf.Min(Screen.width * 0.75f, 900f);
-                float boxHeight = 65f;
-                Rect subRect = new Rect((Screen.width - boxWidth) / 2f, Screen.height - 90f, boxWidth, boxHeight);
-
-                GUI.backgroundColor = new Color(0.1f, 0.1f, 0.15f, 0.88f);
-                GUI.Box(subRect, _currentSubtitle);
+                GUI.Label(new Rect(10, 8, 300, 22), "<color=#ffffffaa>[Tab] testmenu</color>");
+                return;
             }
-
-            // 2. Instructie-hint in de keuken
-            if (currentState == ExperienceState.KitchenIntro)
-            {
-                GUI.skin.box.fontSize = 13;
-                GUI.backgroundColor = new Color(0.15f, 0.15f, 0.2f, 0.75f);
-                Rect hintRect = new Rect((Screen.width - 500f) / 2f, Screen.height - 130f, 500f, 32f);
-                GUI.Box(hintRect, "<b>[Linkermuisknop ingedrukt]</b> Pak brief op ➜ Oud papier (A) of Vader Luc (B)");
-            }
-
-            // 3. Grote prominente rewind knop tijdens het einde
-            if (currentState == ExperienceState.KitchenOutro)
-            {
-                GUI.skin.button.fontSize = 16;
-                GUI.backgroundColor = new Color(0.96f, 0.76f, 0.20f, 0.95f);
-                float btnWidth = 520f;
-                float btnHeight = 52f;
-                Rect rewindBtnRect = new Rect((Screen.width - btnWidth) / 2f, Screen.height - 150f, btnWidth, btnHeight);
-                if (GUI.Button(rewindBtnRect, "<b>↺ TIJD TERUGSPOELEN (Druk op 'R' of Klik Hier)</b>"))
-                {
-                    RewindTime();
-                }
-            }
-
-            // 4. Complete Quick-Test HUD voor elke scène
-            if (_showDebugMenu)
-            {
-                GUI.skin.button.fontSize = 12;
-                GUI.skin.box.fontSize = 12;
-                GUILayout.BeginArea(new Rect(15, 15, 280, 440), GUI.skin.box);
-                GUILayout.Label($"<b>ONCOLOGIE TEST CONTROLLER</b>\nFase: <color=yellow>{currentState}</color>");
-
-                GUILayout.Space(3);
-                GUILayout.Label("<b>--- 1. Keuken & Keuze ---</b>");
-                if (GUILayout.Button("Keuken: Start / Intro")) StartKitchenIntro();
-                if (GUILayout.Button("Optie A: In Prullenmand (Negeren)")) MakeChoice(ScreeningChoice.IgnoredTrash);
-                if (GUILayout.Button("Optie B: Aan Vader Luc Geven (Aandringen)")) MakeChoice(ScreeningChoice.InsistedKeys);
-
-                GUILayout.Space(3);
-                GUILayout.Label("<b>--- 2. Darm (aparte scène) ---</b>");
-                if (GUILayout.Button("Darm: Laad darmscène (3)")) GoToColon();
-
-                GUILayout.Space(3);
-                GUILayout.Label("<b>--- 3. Keuken Eindes ---</b>");
-                if (GUILayout.Button("Keuken: Slecht Einde (Overleden)")) TeleportToKitchenOutroBad();
-                if (GUILayout.Button("Keuken: Goed Einde (Gezond)")) TeleportToKitchenOutroGood();
-
-                GUILayout.Space(3);
-                if (GUILayout.Button("<b>↺ ALLES RESETTEN (R)</b>")) RewindTime();
-
-                GUILayout.Label("<size=10>[Tab] Verberg HUD | [Esc] Muiscursor</size>");
-                GUILayout.EndArea();
-            }
+            GUILayout.BeginArea(new Rect(10, 10, 330, 230), GUI.skin.box);
+            GUILayout.Label($"<b>ONCOLOGIE – IRL test</b>   fase: <color=yellow>{currentState}</color>   keuze: {playerChoice}");
+            GUILayout.Label("1 = keuze A (vuilbak)     2 = keuze B (aan Luc)");
+            GUILayout.Label("3 = einde slecht           4 = einde goed");
+            GUILayout.Label("5 = herstart                 6 = kaarsjes overslaan");
+            GUILayout.Label("Klik = pakken/loslaten · E = gebruiken · scroll = afstand");
+            GUILayout.Label("Esc = muiscursor vrijgeven");
+            GUILayout.EndArea();
         }
     }
 }
