@@ -3,17 +3,17 @@ using UnityEngine.Events;
 using UnityEngine.XR;
 
 /// <summary>
-/// Hartslag in de darm: geluid, controller-vibratie en een puls naar ColonAtmosphere (wand klopt mee, rode gloed).
+/// Hartslag in de darm: geluid, controller-vibratie en een puls naar ColonDisease (wand rond de poliepen klopt mee, rode gloed).
 /// Het ritme volgt de severity: rustig en regelmatig bij gezond, sneller en onregelmatiger
 /// (overgeslagen slagen, extra vroege slagen) als het kritiek wordt.
 /// Zonder eigen AudioClip wordt een korte "lub-dub" één keer procedureel aangemaakt (geen asset nodig).
-/// Zet dit op dezelfde GameObject als ColonAtmosphere, samen met een AudioSource.
+/// Zet dit op dezelfde GameObject als ColonDisease, samen met een AudioSource.
 /// </summary>
 [RequireComponent(typeof(AudioSource))]
 public class ColonHeartbeat : MonoBehaviour
 {
     [Header("Referenties")]
-    public ColonAtmosphere atmosphere;
+    public ColonDisease disease;
     [Tooltip("Eén hartslag (lub-dub). Leeg = procedureel geluid.")]
     public AudioClip beatClip;
 
@@ -53,8 +53,8 @@ public class ColonHeartbeat : MonoBehaviour
         source.playOnAwake = false;
         source.loop = false;
         source.spatialBlend = 0f;   // het hart zit overal rondom je
-        if (atmosphere == null) atmosphere = GetComponent<ColonAtmosphere>();
-        if (atmosphere == null) atmosphere = FindAnyObjectByType<ColonAtmosphere>();
+        if (disease == null) disease = GetComponent<ColonDisease>();
+        if (disease == null) disease = FindAnyObjectByType<ColonDisease>();
         if (beatClip == null) { beatClip = CreateLubDub(); ownsClip = true; }
     }
 
@@ -64,7 +64,7 @@ public class ColonHeartbeat : MonoBehaviour
     {
         if (Time.time < nextBeat) return;
 
-        float s = atmosphere != null ? atmosphere.Severity : 0f;
+        float s = disease != null ? disease.Severity : 0f;
         float irregular = Mathf.InverseLerp(irregularFrom, 1f, s);
         float interval = 60f / Mathf.Lerp(bpmHealthy, bpmSick, s);
         float strength = 1f;
@@ -100,7 +100,7 @@ public class ColonHeartbeat : MonoBehaviour
             SendHaptic(XRNode.RightHand, amp);
         }
 
-        if (atmosphere != null) atmosphere.Pulse(strength);
+        if (disease != null) disease.Pulse(strength);
         onBeat?.Invoke(strength);
     }
 
