@@ -10,7 +10,8 @@ Shader "Oncologie/ColonWallInfected"
     {
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
         [MainColor] _BaseColor("Base Color", Color) = (1,1,1,1)
-        _Smoothness("Smoothness (glans)", Range(0,1)) = 0.78
+        _Smoothness("Smoothness (glans)", Range(0,1)) = 0.6
+        [ToggleOff] _EnvironmentReflections("Omgevingsreflecties (skybox)", Float) = 0
         _InflamedColor("Ontstoken kleur (vermenigvuldigd)", Color) = (0.85, 0.3, 0.32, 1)
         _VeinColor("Aders", Color) = (0.35, 0.03, 0.06, 1)
         _NecroticColor("Necrose", Color) = (0.16, 0.1, 0.08, 1)
@@ -49,6 +50,8 @@ Shader "Oncologie/ColonWallInfected"
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            // In een darm is er geen lucht om te weerspiegelen: standaard uit (ook goedkoper op de Quest)
+            #pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 

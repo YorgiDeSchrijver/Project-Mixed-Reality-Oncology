@@ -1654,7 +1654,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Oncologie.Dialogue.VRSubtitleFollower
   distance: 1.1
-  heightOffset: -0.22
+  heightOffset: -0.18
   followSpeed: 6
 --- !u!114 &938643621
 MonoBehaviour:
@@ -1729,7 +1729,7 @@ RectTransform:
   m_GameObject: {fileID: 938643619}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.0011314286, y: 0.0011314286, z: 0.0011314286}
+  m_LocalScale: {x: 0.0009, y: 0.0009, z: 0.0009}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1982484881}
@@ -3245,8 +3245,8 @@ RectTransform:
   - {fileID: 443349908}
   m_Father: {fileID: 938643624}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.15, y: 0.04}
-  m_AnchorMax: {x: 0.85, y: 0.16}
+  m_AnchorMin: {x: 0.15, y: 0.44}
+  m_AnchorMax: {x: 0.85, y: 0.56}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
