@@ -919,6 +919,85 @@ Transform:
   m_Children: []
   m_Father: {fileID: 902376973}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &443349907
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 443349908}
+  - component: {fileID: 443349910}
+  - component: {fileID: 443349909}
+  m_Layer: 0
+  m_Name: Dialogue_Text
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &443349908
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443349907}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1982484881}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.03, y: 0.08}
+  m_AnchorMax: {x: 0.97, y: 0.65}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &443349909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443349907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 22
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: Voorbeeld dialoog tekst...
+--- !u!222 &443349910
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443349907}
+  m_CullTransparentMesh: 1
 --- !u!1 &484840562
 GameObject:
   m_ObjectHideFlags: 0
@@ -1542,6 +1621,125 @@ Transform:
   m_Children: []
   m_Father: {fileID: 902376973}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &938643619
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 938643624}
+  - component: {fileID: 938643623}
+  - component: {fileID: 938643622}
+  - component: {fileID: 938643621}
+  - component: {fileID: 938643620}
+  m_Layer: 0
+  m_Name: Dialogue_Canvas
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &938643620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938643619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cd6995e5e3a51948b64d13f45705dbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Oncologie.Dialogue.VRSubtitleFollower
+  distance: 1.1
+  heightOffset: -0.22
+  followSpeed: 6
+--- !u!114 &938643621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938643619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &938643622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938643619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0.5
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!223 &938643623
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938643619}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 100
+  m_TargetDisplay: 0
+--- !u!224 &938643624
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938643619}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.0011314286, y: 0.0011314286, z: 0.0011314286}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1982484881}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 475.40002, y: 221.7}
+  m_SizeDelta: {x: 1600, y: 900}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &949442570
 GameObject:
   m_ObjectHideFlags: 0
@@ -2257,6 +2455,226 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &1342739285
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1342739288}
+  - component: {fileID: 1342739287}
+  - component: {fileID: 1342739286}
+  m_Layer: 0
+  m_Name: Dialogue_Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1342739286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342739285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 183842b0140aac94f9a9352ecf96de59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ColonStory
+  rider: {fileID: 0}
+  introKey: Darm_Intro
+  introDelay: 1.5
+  endKey: Darm_Einde
+  stations:
+  - stage: 1
+    sequenceKey: Darm_Poliep1
+  - stage: 2
+    sequenceKey: Darm_Poliep2
+  - stage: 3
+    sequenceKey: Darm_Poliep3
+  - stage: 4
+    sequenceKey: Darm_Poliep4
+  trigger: 1
+  inspectFallback: 4
+  holdPlayerDuringStation: 1
+  onStoryStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onStoryFinished:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1342739287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342739285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcf769492ed6f7d4d97fe6fcebf305fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Oncologie.Dialogue.DialogueManager
+  voiceAudioSource: {fileID: 0}
+  useScriptLines: 0
+  sequences:
+  - sequenceKey: Darm_Intro
+    description: Start van de wandeling, gezonde darm
+    lines:
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Welkom in de dikke darm van Luc. Anderhalve meter lang, en hij voelt er helemaal niets van.
+      voiceClip: {fileID: 0}
+      displayDuration: 5.5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Kijk maar rond. Roze, glad en glanzend. Zo hoort het eruit te zien.
+      voiceClip: {fileID: 0}
+      displayDuration: 4.5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Loop verder. Ergens hier begint iets heel kleins.
+      voiceClip: {fileID: 0}
+      displayDuration: 3.5
+      pauseAfter: 0.4
+  - sequenceKey: Darm_Poliep1
+    description: 'Stadium 1: kleine poliep'
+    lines:
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Zie je dat bobbeltje op de wand? Dat is een poliep.
+      voiceClip: {fileID: 0}
+      displayDuration: 4
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Een groepje cellen dat net iets te snel groeit. Meestal is dat nog onschuldig.
+      voiceClip: {fileID: 0}
+      displayDuration: 5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Geen pijn. Geen bloed dat Luc kan zien. Niets.
+      voiceClip: {fileID: 0}
+      displayDuration: 4
+      pauseAfter: 0.4
+    - speakerName: Luc (van ver)
+      speakerColor: {r: 0.45, g: 0.8, b: 1, a: 1}
+      subtitleText: "Ik voel mij kiplekker, h\xE8."
+      voiceClip: {fileID: 0}
+      displayDuration: 3
+      pauseAfter: 0.4
+  - sequenceKey: Darm_Poliep2
+    description: 'Stadium 2: poliep groeit, wand ontstoken'
+    lines:
+    - speakerName: Verteller
+      speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+      subtitleText: Een tijd later. De brief van het bevolkingsonderzoek hangt nog altijd op de frigo.
+      voiceClip: {fileID: 0}
+      displayDuration: 5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: 'De poliep is gegroeid. Kijk naar de wand errond: rood en ontstoken.'
+      voiceClip: {fileID: 0}
+      displayDuration: 4.5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Soms bloedt hij een heel klein beetje. Te weinig om te zien, maar de stoelgangtest vindt het wel.
+      voiceClip: {fileID: 0}
+      displayDuration: 6
+      pauseAfter: 0.4
+  - sequenceKey: Darm_Poliep3
+    description: 'Stadium 3: cellen worden kwaadaardig'
+    lines:
+    - speakerName: Verteller
+      speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+      subtitleText: Weer jaren later. Nog altijd geen test.
+      voiceClip: {fileID: 0}
+      displayDuration: 3.5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Dit is geen onschuldig knobbeltje meer. Sommige cellen zijn kwaadaardig geworden.
+      voiceClip: {fileID: 0}
+      displayDuration: 5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: "Nu kan het nog. Bij een coloscopie halen we zo'n poliep vaak in \xE9\xE9n keer weg."
+      voiceClip: {fileID: 0}
+      displayDuration: 5
+      pauseAfter: 0.4
+    - speakerName: Luc (van ver)
+      speakerColor: {r: 0.45, g: 0.8, b: 1, a: 1}
+      subtitleText: Volgend jaar doe ik die test wel.
+      voiceClip: {fileID: 0}
+      displayDuration: 3
+      pauseAfter: 0.4
+  - sequenceKey: Darm_Poliep4
+    description: 'Stadium 4: tumor, necrose'
+    lines:
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Dit is een tumor. Het weefsel errond sterft af.
+      voiceClip: {fileID: 0}
+      displayDuration: 4
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: Hij groeit door de darmwand heen. Van hieruit kan de kanker uitzaaien.
+      voiceClip: {fileID: 0}
+      displayDuration: 5
+      pauseAfter: 0.4
+    - speakerName: Dokter
+      speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
+      subtitleText: En al die tijd voelde Luc... niets.
+      voiceClip: {fileID: 0}
+      displayDuration: 4
+      pauseAfter: 0.4
+  - sequenceKey: Darm_Einde
+    description: Einde van de darm
+    lines:
+    - speakerName: Verteller
+      speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+      subtitleText: Darmkanker begint bijna altijd als een poliep. En een poliep doet geen pijn.
+      voiceClip: {fileID: 0}
+      displayDuration: 5.5
+      pauseAfter: 0.4
+    - speakerName: Verteller
+      speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+      subtitleText: "De stoelgangtest vindt het v\xF3\xF3r je iets voelt. Gratis, thuis, om de twee jaar, van 50 tot 74 jaar."
+      voiceClip: {fileID: 0}
+      displayDuration: 6.5
+      pauseAfter: 0.4
+  onLineStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onSequenceFinished:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1342739288
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342739285}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1366797126
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2619,6 +3037,85 @@ Transform:
   - {fileID: 516009094}
   m_Father: {fileID: 196726237}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1655497899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1655497900}
+  - component: {fileID: 1655497902}
+  - component: {fileID: 1655497901}
+  m_Layer: 0
+  m_Name: Speaker_Label
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1655497900
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1655497899}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1982484881}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.03, y: 0.65}
+  m_AnchorMax: {x: 0.97, y: 0.95}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1655497901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1655497899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.35, g: 0.78, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 24
+    m_FontStyle: 1
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 3
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: Vader Luc
+--- !u!222 &1655497902
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1655497899}
+  m_CullTransparentMesh: 1
 --- !u!1 &1682997054
 GameObject:
   m_ObjectHideFlags: 0
@@ -2712,6 +3209,114 @@ Transform:
   m_Children: []
   m_Father: {fileID: 902376973}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1982484880
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1982484881}
+  - component: {fileID: 1982484885}
+  - component: {fileID: 1982484884}
+  - component: {fileID: 1982484883}
+  - component: {fileID: 1982484882}
+  m_Layer: 0
+  m_Name: Subtitle_Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1982484881
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982484880}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1655497900}
+  - {fileID: 443349908}
+  m_Father: {fileID: 938643624}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.15, y: 0.04}
+  m_AnchorMax: {x: 0.85, y: 0.16}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1982484882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982484880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3526923f8d933f84bb57fa5eda465d80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Oncologie.Dialogue.SubtitleUI
+  canvasGroup: {fileID: 1982484883}
+  speakerLabel: {fileID: 1655497901}
+  dialogueBodyText: {fileID: 443349909}
+  backgroundPanel: {fileID: 1982484884}
+  fadeDuration: 0.25
+--- !u!225 &1982484883
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982484880}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &1982484884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982484880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.08, g: 0.08, b: 0.12, a: 0.9}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1982484885
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1982484880}
+  m_CullTransparentMesh: 1
 --- !u!1 &2034540248
 GameObject:
   m_ObjectHideFlags: 0
@@ -2859,3 +3464,5 @@ SceneRoots:
   - {fileID: 65365157}
   - {fileID: 97223310}
   - {fileID: 949442574}
+  - {fileID: 938643624}
+  - {fileID: 1342739288}
