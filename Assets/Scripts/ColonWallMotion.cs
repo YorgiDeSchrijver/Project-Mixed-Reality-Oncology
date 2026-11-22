@@ -51,6 +51,12 @@ public class ColonWallMotion : MonoBehaviour
     [Tooltip("Hoe snel het effect aan- en uitgaat (seconden)")]
     public float reactionTime = 0.6f;
 
+    [Header("Extern gestuurd (bv. door ColonAtmosphere)")]
+    [Tooltip("Hoeveel (m) de hele wand naar binnen komt (darm wordt smaller)")]
+    public float narrowing = 0f;
+    [Tooltip("Extra beweging (m) naar binnen, bv. op elke hartslag")]
+    public float pulse = 0f;
+
     [Header("Performance")]
     [Tooltip("Alleen segmenten binnen deze afstand (m) van de speler bewegen")]
     public float activeRange = 10f;
@@ -211,6 +217,7 @@ public class ColonWallMotion : MonoBehaviour
         float w1 = k1 * waveSpeed;
         float k2 = k1 / 0.37f;     // kortere golfjes (haustra)
         float tw = twitchSpeed;
+        float inward = narrowing + pulse;
 
         for (int si = 0; si < segments.Length; si++)
         {
@@ -235,7 +242,7 @@ public class ColonWallMotion : MonoBehaviour
                     if (ds > -cutoff && ds < cutoff)
                         a += push * Mathf.Exp(-ds * ds * inv2s2) * Mathf.Sin(kp * (s - pushDistance));
                 }
-                w[i] = b[i] + d[i] * a;
+                w[i] = b[i] + d[i] * (a - inward);
             }
             seg.mesh.vertices = w;
             MoveAttached(si, seg);
