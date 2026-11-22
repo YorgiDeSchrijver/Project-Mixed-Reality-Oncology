@@ -2531,18 +2531,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ColonStory
   rider: {fileID: 0}
+  questionPanel: {fileID: 1623368611}
   introKey: Darm_Intro
   introDelay: 1.5
   endKey: Darm_Einde
   stations:
   - stage: 1
     sequenceKey: Darm_Poliep1
+    question: {fileID: 11400000, guid: 6d283f43ad91b3a47abc1c19306f7194, type: 2}
   - stage: 2
     sequenceKey: Darm_Poliep2
+    question: {fileID: 11400000, guid: 1d5c72e73f4f6a94f8833f461e624cd1, type: 2}
   - stage: 3
     sequenceKey: Darm_Poliep3
+    question: {fileID: 11400000, guid: 5758b84622c44cc4db6d06bf8011b0c7, type: 2}
   - stage: 4
     sequenceKey: Darm_Poliep4
+    question: {fileID: 11400000, guid: 85e69bc4afae77e4c8822de39363cb6c, type: 2}
   trigger: 1
   inspectFallback: 4
   holdPlayerDuringStation: 1
@@ -3050,6 +3055,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd24c75e0c6fe1840a83f5035810d60a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WallAttached
+--- !u!1 &1623368610
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1623368612}
+  - component: {fileID: 1623368611}
+  m_Layer: 0
+  m_Name: ColonQuestionPanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1623368611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1623368610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cb9d3aa2a774c8479de454e611b8bc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ColonQuestionPanel
+  distance: 1.4
+  heightOffset: -0.05
+  followAngle: 40
+  metersPerPixel: 0.0011
+  dwellSeconds: 1.6
+  inputDelay: 1
+  allowKeyboard: 1
+  background: {r: 0.06, g: 0.03, b: 0.05, a: 0.9}
+  answerIdle: {r: 1, g: 1, b: 1, a: 0.08}
+  answerHover: {r: 1, g: 1, b: 1, a: 0.2}
+  correctColor: {r: 0.35, g: 0.8, b: 0.5, a: 0.55}
+  otherColor: {r: 0.95, g: 0.68, b: 0.3, a: 0.5}
+  accent: {r: 1, g: 0.82, b: 0.35, a: 1}
+  onAnswered:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!4 &1623368612
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1623368610}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1640033029
 GameObject:
   m_ObjectHideFlags: 0
@@ -3512,3 +3577,4 @@ SceneRoots:
   - {fileID: 938643624}
   - {fileID: 1342739288}
   - {fileID: 610923065}
+  - {fileID: 1623368612}

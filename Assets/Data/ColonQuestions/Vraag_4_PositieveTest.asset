@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a84c559f5d62f4346ac80c04939840d0, type: 3}
+  m_Name: Vraag_4_PositieveTest
+  m_EditorClassIdentifier: Assembly-CSharp::ColonQuestion
+  topic: Een positieve test
+  question: De stoelgangtest van Luc is positief. Wat betekent dat?
+  answers:
+  - text: Luc heeft zeker darmkanker
+    correct: 0
+    explanation: Nee. De test vindt bloed, en dat kan veel oorzaken hebben, zoals poliepen of aambeien.
+  - text: Er is bloed gevonden; een coloscopie moet uitzoeken waar het vandaan komt
+    correct: 1
+    explanation: 'Juist: de coloscopie zoekt de oorzaak en kan poliepen meteen verwijderen.'
+  - text: Luc doet de test over twee jaar gewoon opnieuw
+    correct: 0
+    explanation: 'Best niet wachten: na een positieve test volgt zo snel mogelijk een coloscopie.'
+  explanation: "Een positieve test betekent dat er bloed in de stoelgang zit. Bij een coloscopie kijkt de arts met een camera in de darm en kan hij poliepen meteen wegnemen. Bij de meeste mensen met een positieve test wordt g\xE9\xE9n kanker gevonden."
+  questionVoice: {fileID: 0}
+  isPlaceholder: 1
+  source: Tijdelijke tekst (ontwikkelteam), te controleren/vervangen door de studenten

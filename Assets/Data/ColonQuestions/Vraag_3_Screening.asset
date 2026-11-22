@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a84c559f5d62f4346ac80c04939840d0, type: 3}
+  m_Name: Vraag_3_Screening
+  m_EditorClassIdentifier: Assembly-CSharp::ColonQuestion
+  topic: Het bevolkingsonderzoek
+  question: Wie krijgt in Vlaanderen gratis een stoelgangtest thuis opgestuurd?
+  answers:
+  - text: Iedereen vanaf 18 jaar
+    correct: 0
+    explanation: Op jonge leeftijd is darmkanker zeldzaam; het risico stijgt vooral vanaf 50 jaar.
+  - text: Iedereen van 50 tot 74 jaar, om de twee jaar
+    correct: 1
+    explanation: 'Klopt: in die leeftijdsgroep levert vroege opsporing het meeste op.'
+  - text: Alleen mensen die al klachten hebben
+    correct: 0
+    explanation: "Wie klachten heeft, gaat best meteen naar de huisarts. De test is net bedoeld voor mensen z\xF3nder klachten."
+  explanation: Het bevolkingsonderzoek dikkedarmkanker nodigt iedereen van 50 tot en met 74 jaar om de twee jaar uit. De test is gratis en je doet hem gewoon thuis.
+  questionVoice: {fileID: 0}
+  isPlaceholder: 1
+  source: Tijdelijke tekst (ontwikkelteam), te controleren/vervangen door de studenten

@@ -24,10 +24,13 @@ public class ColonStory : MonoBehaviour
         [Range(1, 4)] public int stage = 1;
         [Tooltip("Sleutel van de reeks in de DialogueManager")]
         public string sequenceKey = "";
+        [Tooltip("Optioneel: leervraag na de dialoog (Create > Oncologie > Darm-vraag)")]
+        public ColonQuestion question;
     }
 
     [Header("Referenties (leeg = automatisch zoeken)")]
     public ColonPathRider rider;
+    public ColonQuestionPanel questionPanel;
 
     [Header("Intro en slot")]
     public string introKey = "Darm_Intro";
@@ -64,6 +67,7 @@ public class ColonStory : MonoBehaviour
     void Start()
     {
         if (rider == null) rider = FindAnyObjectByType<ColonPathRider>();
+        if (questionPanel == null) questionPanel = FindAnyObjectByType<ColonQuestionPanel>();
         if (DialogueManager.Instance == null)
             Debug.LogWarning("ColonStory: geen DialogueManager in de scène, er wordt niets verteld.");
 
@@ -88,6 +92,12 @@ public class ColonStory : MonoBehaviour
     string KeyForStage(int stage)
     {
         foreach (var s in stations) if (s.stage == stage) return s.sequenceKey;
+        return null;
+    }
+
+    ColonQuestion QuestionForKey(string key)
+    {
+        foreach (var s in stations) if (s.sequenceKey == key) return s.question;
         return null;
     }
 
@@ -128,6 +138,15 @@ public class ColonStory : MonoBehaviour
             bool done = false;
             dm.PlaySequence(key, () => done = true);
             while (!done) yield return null;
+
+            // daarna (optioneel) een leervraag; de speler blijft staan tot hij 'Verder' kiest
+            var q = QuestionForKey(key);
+            if (q != null && questionPanel != null)
+            {
+                bool answered = false;
+                questionPanel.Ask(q, () => answered = true);
+                while (!answered) yield return null;
+            }
 
             if (hold) rider.SetInputEnabled(true);
             onStoryFinished?.Invoke(key);
