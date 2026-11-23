@@ -99,7 +99,6 @@ public class ColonQuestionPanel : MonoBehaviour
     [Header("Audio-feedback (leeg = zacht procedureel geluid)")]
     public bool playSounds = true;
     [Range(0f, 1f)] public float soundVolume = 0.6f;
-    public AudioClip hoverClip;
     public AudioClip correctClip;
     public AudioClip wrongClip;
     public AudioClip confirmClip;
@@ -114,7 +113,6 @@ public class ColonQuestionPanel : MonoBehaviour
     void Awake()
     {
         Build();
-        if (hoverClip == null) hoverClip = Own(MakeTones("Q_Hover", 0.09f, 0.35f, 40f, 1320f));
         if (confirmClip == null) confirmClip = Own(MakeTones("Q_Confirm", 0.16f, 0.45f, 22f, 660f, 990f));
         // goed: opgaande, heldere toonladder (C-E-G); fout: één zachte, lage toon, vriendelijk en niet afkeurend
         if (correctClip == null) correctClip = Own(MakeNotes("Q_Correct", 0.14f, 0.5f, 523.25f, 659.25f, 783.99f));
@@ -297,11 +295,7 @@ public class ColonQuestionPanel : MonoBehaviour
         }
         UpdateReticle();
 
-        if (target != hover)
-        {
-            hover = target; hoverTime = 0f;
-            if (hover >= 0) Play(hoverClip);   // zacht tikje: "ik zie waar je naar kijkt"
-        }
+        if (target != hover) { hover = target; hoverTime = 0f; }
         else if (hover >= 0) hoverTime += Time.deltaTime;
 
         if (!showingFeedback)
