@@ -96,6 +96,17 @@ public class ColonQuestionPanel : MonoBehaviour
     float hoverTime, readyAt, openedAt;
     int chosenIndex = -1, correctIndex = -1;
 
+    [Header("Audio-feedback (leeg = zacht procedureel geluid)")]
+    public bool playSounds = true;
+    [Range(0f, 1f)] public float soundVolume = 0.6f;
+    public AudioClip hoverClip;
+    public AudioClip correctClip;
+    public AudioClip wrongClip;
+    public AudioClip confirmClip;
+
+    AudioSource sfx;
+    readonly System.Collections.Generic.List<AudioClip> ownedClips = new System.Collections.Generic.List<AudioClip>();
+
     public bool IsOpen => current != null || infoMode;
 
     Material runtimeTextMaterial;
@@ -103,12 +114,77 @@ public class ColonQuestionPanel : MonoBehaviour
     void Awake()
     {
         Build();
+        if (hoverClip == null) hoverClip = Own(MakeTones("Q_Hover", 0.09f, 0.35f, 40f, 1320f));
+        if (confirmClip == null) confirmClip = Own(MakeTones("Q_Confirm", 0.16f, 0.45f, 22f, 660f, 990f));
+        // goed: opgaande, heldere toonladder (C-E-G); fout: één zachte, lage toon, vriendelijk en niet afkeurend
+        if (correctClip == null) correctClip = Own(MakeNotes("Q_Correct", 0.14f, 0.5f, 523.25f, 659.25f, 783.99f));
+        if (wrongClip == null) wrongClip = Own(MakeNotes("Q_Wrong", 0.32f, 0.4f, 349.23f, 293.66f));
         canvas.gameObject.SetActive(false);
     }
 
     void OnDestroy()
     {
         if (runtimeTextMaterial != null) Destroy(runtimeTextMaterial);
+        foreach (var c in ownedClips) if (c != null) Destroy(c);
+    }
+
+    // ================= audio =================
+
+    AudioClip Own(AudioClip c) { ownedClips.Add(c); return c; }
+
+    void Play(AudioClip clip, float gain = 1f)
+    {
+        if (!playSounds || clip == null) return;
+        if (sfx == null)
+        {
+            sfx = GetComponent<AudioSource>();
+            if (sfx == null) sfx = gameObject.AddComponent<AudioSource>();
+            sfx.spatialBlend = 0f; sfx.playOnAwake = false;
+        }
+        sfx.PlayOneShot(clip, soundVolume * gain);
+    }
+
+    // Eén korte "tik" of dubbele toon: sinus met zachte aanzet en uitsterven. decay = hoe snel hij uitsterft.
+    static AudioClip MakeTones(string name, float seconds, float gain, float decay, params float[] freqs)
+    {
+        return Synth(name, seconds, gain, decay, 0f, freqs);
+    }
+
+    // Opeenvolgende noten (elke noot 'step' seconden later), zacht klokkend
+    static AudioClip MakeNotes(string name, float step, float gain, params float[] freqs)
+    {
+        float total = step * (freqs.Length - 1) + 0.55f;
+        return Synth(name, total, gain, 7f, step, freqs);
+    }
+
+    static AudioClip Synth(string name, float seconds, float gain, float decay, float step, float[] freqs)
+    {
+        const int rate = 22050;
+        int n = Mathf.CeilToInt(rate * seconds);
+        var data = new float[n];
+        for (int f = 0; f < freqs.Length; f++)
+        {
+            // step 0 = tegelijk (akkoord/dubbele toon), anders na elkaar
+            int start = Mathf.RoundToInt(rate * step * f);
+            float amp = step > 0f ? 1f : 1f / freqs.Length;
+            float phase = 0f;
+            for (int i = start; i < n; i++)
+            {
+                float t = (i - start) / (float)rate;
+                float env = (1f - Mathf.Exp(-t * 600f)) * Mathf.Exp(-t * decay);
+                phase += 2f * Mathf.PI * freqs[f] / rate;
+                data[i] += amp * env * (Mathf.Sin(phase) + 0.2f * Mathf.Sin(phase * 2f));
+            }
+        }
+        float fade = Mathf.Min(0.05f, seconds * 0.3f);
+        for (int i = 0; i < n; i++)
+        {
+            float left = (n - i) / (float)rate;
+            data[i] = Mathf.Clamp(data[i] * gain * (left < fade ? left / fade : 1f), -1f, 1f);
+        }
+        var clip = AudioClip.Create(name, n, 1, rate, false);
+        clip.SetData(data, 0);
+        return clip;
     }
 
     // ================= publieke functies =================
@@ -221,7 +297,11 @@ public class ColonQuestionPanel : MonoBehaviour
         }
         UpdateReticle();
 
-        if (target != hover) { hover = target; hoverTime = 0f; }
+        if (target != hover)
+        {
+            hover = target; hoverTime = 0f;
+            if (hover >= 0) Play(hoverClip);   // zacht tikje: "ik zie waar je naar kijkt"
+        }
         else if (hover >= 0) hoverTime += Time.deltaTime;
 
         if (!showingFeedback)
@@ -269,11 +349,14 @@ public class ColonQuestionPanel : MonoBehaviour
         StyleButton(false, 0f);
         hover = -1; hoverTime = 0f; readyAt = Time.time + 2.5f; blockSet = false;   // eerst even lezen
 
+        Play(ok ? correctClip : wrongClip);
+
         onAnswered?.Invoke(q, index, ok);
     }
 
     void Close()
     {
+        Play(confirmClip);
         SetDemoVisible(false);
         canvas.gameObject.SetActive(false);
         current = null; infoMode = false;
