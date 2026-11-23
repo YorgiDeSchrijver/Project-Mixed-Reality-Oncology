@@ -209,9 +209,15 @@ public class ColonQuestionPanel : MonoBehaviour
         if (Time.time >= readyAt)
         {
             target = GazeTarget();
-            if (!blockSet) { blocked = target; blockSet = true; }
-            if (target != blocked) blocked = -1;
-            else if (blocked >= 0) target = -1;
+            // Alleen bij de antwoorden: wat al onder je blik lag bij het openen telt pas na even wegkijken
+            // (tegen per ongeluk kiezen). De knop 'Verder' mag meteen vollopen zodra hij actief is,
+            // ook als je er tijdens het lezen al naar keek.
+            if (!showingFeedback)
+            {
+                if (!blockSet) { blocked = target; blockSet = true; }
+                if (target != blocked) blocked = -1;
+                else if (blocked >= 0) target = -1;
+            }
         }
         UpdateReticle();
 
@@ -306,7 +312,12 @@ public class ColonQuestionPanel : MonoBehaviour
 
     void StyleButton(bool hovered, float progress)
     {
-        continueBg.color = hovered ? Color.Lerp(accentColor, Color.white, 0.25f) : accentColor;
+        // zolang de leestijd loopt is de knop gedimd, zodat je ziet dat hij nog niet werkt
+        bool active = Time.time >= readyAt;
+        Color c = hovered ? Color.Lerp(accentColor, Color.white, 0.25f) : accentColor;
+        if (!active) c = Color.Lerp(new Color(0.25f, 0.18f, 0.2f, 1f), accentColor, 0.35f);
+        continueBg.color = c;
+        continueLabel.alpha = active ? 1f : 0.55f;
         float k = Mathf.Clamp01(progress);
         continueFill.gameObject.SetActive(k > 0.001f);
         continueFill.anchorMax = new Vector2(k, 1f);
