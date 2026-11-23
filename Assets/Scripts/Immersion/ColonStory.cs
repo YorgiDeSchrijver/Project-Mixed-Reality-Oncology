@@ -52,7 +52,7 @@ public class ColonStory : MonoBehaviour
 
     public const string InstructionDefault =
         "Bij elke poliep stelt de dokter je een vraag.\n\n" +
-        "Kies een antwoord door ernaar te kijken tot het balkje vol is, zoals in het voorbeeld hieronder. " +
+        "Kies een antwoord door ernaar te kijken tot de kaart helemaal opgevuld is, zoals in het voorbeeld hieronder. " +
         "Het witte puntje toont waar je kijkt.\n\n" +
         "Fout antwoorden is niet erg: je krijgt altijd uitleg.\n\n" +
         "Probeer het nu met de knop onderaan.";
