@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a84c559f5d62f4346ac80c04939840d0, type: 3}
+  m_Name: Vraag_1_WatIsEenPoliep
+  m_EditorClassIdentifier: Assembly-CSharp::ColonQuestion
+  topic: Wat is een poliep?
+  question: Wat is een poliep in de dikke darm?
+  answers:
+  - text: Een uitgroeisel van het slijmvlies dat meestal goedaardig is, maar kwaadaardig kan worden
+    correct: 1
+    explanation: 'Precies: goedaardig begin, maar met de tijd kan het kwaadaardig worden.'
+  - text: Altijd al een vorm van kanker
+    correct: 0
+    explanation: 'Gelukkig niet: de meeste poliepen zijn goedaardig. Alleen sommige worden na jaren kwaadaardig.'
+  - text: Een ontsteking door slechte voeding
+    correct: 0
+    explanation: "Voeding kan het risico be\xEFnvloeden, maar een poliep is geen ontsteking: het is weefsel dat te veel groeit."
+  explanation: Een poliep is een uitgroeisel van het darmslijmvlies. De meeste zijn goedaardig, maar een deel kan in de loop van jaren uitgroeien tot darmkanker. Daarom haalt de arts poliepen bij een coloscopie meestal meteen weg.
+  questionVoice: {fileID: 0}
+  isPlaceholder: 1
+  source: Tijdelijke tekst (ontwikkelteam), te controleren/vervangen door de studenten

@@ -75,6 +75,22 @@ public class ColonWallMotion : MonoBehaviour
     float pushDistance;      // opgetelde afgelegde afstand langs het pad, bepaalt de fase van de golf
     bool haveLast;
 
+    // Zwellingen: plekken waar de wand naar binnen komt (bv. rond een zieke poliep, gestuurd door ColonDisease)
+    const int MaxHotspots = 4;
+    readonly Vector3[] hotPos = new Vector3[MaxHotspots];     // wereldruimte
+    readonly float[] hotRadius = new float[MaxHotspots];      // m
+    readonly float[] hotDepth = new float[MaxHotspots];       // m naar binnen in het midden
+    readonly Vector3[] hotLocal = new Vector3[MaxHotspots];   // werkbuffer per segment
+    readonly float[] hotInvR2 = new float[MaxHotspots];
+    readonly float[] hotDepthLocal = new float[MaxHotspots];
+
+    /// <summary>Laat de wand rond een punt naar binnen zwellen. radius of depth 0 = uit.</summary>
+    public void SetHotspot(int index, Vector3 worldPos, float radius, float depth)
+    {
+        if (index < 0 || index >= MaxHotspots) return;
+        hotPos[index] = worldPos; hotRadius[index] = radius; hotDepth[index] = depth;
+    }
+
     void Start()
     {
         if (rider == null) rider = FindFirstObjectByType<ColonPathRider>();
@@ -222,6 +238,20 @@ public class ColonWallMotion : MonoBehaviour
                 if ((wb.ClosestPoint(hp) - hp).sqrMagnitude > activeRange * activeRange) continue;
             }
 
+            // zwellingen die dit segment raken, omgezet naar lokale ruimte
+            Transform str = seg.filter.transform;
+            float scale = Mathf.Max(1e-4f, str.lossyScale.x);
+            int hotCount = 0;
+            for (int h = 0; h < MaxHotspots; h++)
+            {
+                if (hotRadius[h] <= 0.001f || hotDepth[h] <= 0.0001f) continue;
+                float rl = hotRadius[h] / scale;
+                hotLocal[hotCount] = str.InverseTransformPoint(hotPos[h]);
+                hotInvR2[hotCount] = 1f / (rl * rl);
+                hotDepthLocal[hotCount] = hotDepth[h];
+                hotCount++;
+            }
+
             Vector3[] b = seg.baseV, w = seg.work, d = seg.dir;
             for (int i = 0; i < b.Length; i++)
             {
@@ -234,6 +264,11 @@ public class ColonWallMotion : MonoBehaviour
                     float ds = s - playerS;
                     if (ds > -cutoff && ds < cutoff)
                         a += push * Mathf.Exp(-ds * ds * inv2s2) * Mathf.Sin(kp * (s - pushDistance));
+                }
+                for (int h = 0; h < hotCount; h++)
+                {
+                    float q = (b[i] - hotLocal[h]).sqrMagnitude * hotInvR2[h];
+                    if (q < 1f) { float f = 1f - q; a -= hotDepthLocal[h] * f * f; }
                 }
                 w[i] = b[i] + d[i] * a;
             }
