@@ -63,6 +63,7 @@ public class ColonStory : MonoBehaviour
     readonly HashSet<string> played = new HashSet<string>();
     readonly HashSet<string> heldKeys = new HashSet<string>();   // poliepen waarvoor de speler nu stilstaat
     int holds;
+    bool resumeAuto;
     bool busy;
 
     void Start()
@@ -121,13 +122,22 @@ public class ColonStory : MonoBehaviour
     void Hold()
     {
         holds++;
-        if (rider != null) rider.SetInputEnabled(false);
+        if (rider == null) return;
+        rider.SetInputEnabled(false);
+        // modus Auto rijdt zelf: daar pauzeren en straks verder laten rijden
+        if (holds == 1 && rider.mode == ColonPathRider.ControlMode.Auto)
+        {
+            resumeAuto = rider.IsMoving;
+            rider.Pause();
+        }
     }
 
     void Release()
     {
         holds = Mathf.Max(0, holds - 1);
-        if (holds == 0 && rider != null) rider.SetInputEnabled(true);
+        if (holds > 0 || rider == null) return;
+        rider.SetInputEnabled(true);
+        if (resumeAuto) { resumeAuto = false; rider.Resume(); }
     }
 
     /// <summary>Vraag een dialoog aan. Speelt maar één keer; wacht als er al iets verteld wordt.</summary>
