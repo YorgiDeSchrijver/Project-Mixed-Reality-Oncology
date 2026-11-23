@@ -45,6 +45,14 @@ public class ColonDisease : MonoBehaviour
     [Tooltip("Kleur van een stadium 4-poliep (stadium 1 houdt zijn eigen kleur)")]
     public Color polypDarkest = new Color(0.32f, 0.12f, 0.16f);
 
+    [Header("Schrikmoment")]
+    [Tooltip("Voeg automatisch ColonScare toe (donkerder licht, mist, gedreun en schrikmoment bij poliepen)")]
+    public bool addScare = true;
+    [Tooltip("Hoeveel (m) de wand even naar de speler toe klapt bij een schrikmoment van stadium 4")]
+    public float shockDepth = 0.14f;
+    [Tooltip("Seconden waarin het schrikmoment uitdooft")]
+    public float shockSeconds = 1.2f;
+
     [Header("Test")]
     [Tooltip("Alle haarden volledig laten opflakkeren, ongeacht waar de speler is")]
     public bool previewFlare = false;
@@ -62,6 +70,7 @@ public class ColonDisease : MonoBehaviour
     Material[] polypMats = new Material[0];
     float pulse;
     float severity;
+    float shock;
 
     /// <summary>0 = niets ziek in de buurt, 1 = vlak bij een stadium 4-poliep.</summary>
     public float Severity => severity;
@@ -71,8 +80,12 @@ public class ColonDisease : MonoBehaviour
     /// <summary>Roep aan op elke hartslag. strength 1 = normale slag.</summary>
     public void Pulse(float strength) { pulse = Mathf.Max(pulse, Mathf.Clamp01(strength)); }
 
+    /// <summary>Laat de wand rond de zieke plekken even hard naar binnen klappen (0..1).</summary>
+    public void Shock(float strength) { shock = Mathf.Max(shock, Mathf.Clamp01(strength)); pulse = 1f; }
+
     void Start()
     {
+        if (addScare && GetComponent<ColonScare>() == null) gameObject.AddComponent<ColonScare>();
         if (rider == null) rider = FindAnyObjectByType<ColonPathRider>();
         if (wall == null) wall = FindAnyObjectByType<ColonWallMotion>();
 
@@ -115,6 +128,7 @@ public class ColonDisease : MonoBehaviour
     void Update()
     {
         pulse = Mathf.MoveTowards(pulse, 0f, Time.deltaTime * 3.5f);
+        shock = Mathf.MoveTowards(shock, 0f, Time.deltaTime / Mathf.Max(0.1f, shockSeconds));
         Apply();
     }
 
@@ -158,7 +172,8 @@ public class ColonDisease : MonoBehaviour
 
             if (wall != null)
             {
-                float depth = sev * (swellDepth * (0.5f + 0.5f * f) + throbDepth * p * f);
+                float depth = sev * (swellDepth * (0.5f + 0.5f * f) + throbDepth * p * f)
+                            + shockDepth * shock * shock * Mathf.Max(f, 0.5f) * sev;
                 wall.SetHotspot(i, pos, r * 1.1f, depth);
             }
 
