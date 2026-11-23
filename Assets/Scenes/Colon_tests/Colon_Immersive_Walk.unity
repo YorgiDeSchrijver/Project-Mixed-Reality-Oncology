@@ -2784,19 +2784,19 @@ MonoBehaviour:
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Welkom in de dikke darm van Luc. Anderhalve meter lang, en hij voelt er helemaal niets van.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: e7e987771ec0a3649989eaf8de452b8d, type: 3}
       displayDuration: 5.5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Kijk maar rond. Roze, glad en glanzend. Zo hoort het eruit te zien.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 382e05324d7d9bb429e4723a6b33c5fa, type: 3}
       displayDuration: 4.5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Loop verder. Ergens hier begint iets heel kleins.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: a2b03e2ef318d004b8e3544095c5e438, type: 3}
       displayDuration: 3.5
       pauseAfter: 0.4
   - sequenceKey: Darm_Poliep1
@@ -2805,25 +2805,25 @@ MonoBehaviour:
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Zie je dat bobbeltje op de wand? Dat is een poliep.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 6d7cc6e01fb991143b0d72649cdd251c, type: 3}
       displayDuration: 4
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Een groepje cellen dat net iets te snel groeit. Meestal is dat nog onschuldig.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 754ad04cdb12b224db365d66c32f59c5, type: 3}
       displayDuration: 5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Geen pijn. Geen bloed dat Luc kan zien. Niets.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 056c2b99bc4cd554aae62ca4f8c70f66, type: 3}
       displayDuration: 4
       pauseAfter: 0.4
     - speakerName: Luc (van ver)
       speakerColor: {r: 0.45, g: 0.8, b: 1, a: 1}
       subtitleText: "Ik voel mij kiplekker, h\xE8."
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 80a2c1285b63ac942984ea7155446b2e, type: 3}
       displayDuration: 3
       pauseAfter: 0.4
   - sequenceKey: Darm_Poliep2
@@ -2832,19 +2832,19 @@ MonoBehaviour:
     - speakerName: Verteller
       speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
       subtitleText: Een tijd later. De brief van het bevolkingsonderzoek hangt nog altijd op de frigo.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 82c87ee3f8e44cd4a96667185f5471a6, type: 3}
       displayDuration: 5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: 'De poliep is gegroeid. Kijk naar de wand errond: rood en ontstoken.'
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: b99945c50ff52dd4cbcc44a5b67e0df9, type: 3}
       displayDuration: 4.5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Soms bloedt hij een heel klein beetje. Te weinig om te zien, maar de stoelgangtest vindt het wel.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 2f5fcec4865622a428ae201635fd9cce, type: 3}
       displayDuration: 6
       pauseAfter: 0.4
   - sequenceKey: Darm_Poliep3
@@ -2853,25 +2853,25 @@ MonoBehaviour:
     - speakerName: Verteller
       speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
       subtitleText: Weer jaren later. Nog altijd geen test.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: b13ba19a56f17fc4b95a8f4203c1707f, type: 3}
       displayDuration: 3.5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Dit is geen onschuldig knobbeltje meer. Sommige cellen zijn kwaadaardig geworden.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 08a7e8e47f0c1a5489890e843f580a2c, type: 3}
       displayDuration: 5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: "Nu kan het nog. Bij een coloscopie halen we zo'n poliep vaak in \xE9\xE9n keer weg."
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 8c4e126e6c6529241a71998fc085fcdf, type: 3}
       displayDuration: 5
       pauseAfter: 0.4
     - speakerName: Luc (van ver)
       speakerColor: {r: 0.45, g: 0.8, b: 1, a: 1}
       subtitleText: Volgend jaar doe ik die test wel.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: cc25ef1877f693845be85737509cf204, type: 3}
       displayDuration: 3
       pauseAfter: 0.4
   - sequenceKey: Darm_Poliep4
@@ -2880,19 +2880,19 @@ MonoBehaviour:
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Dit is een tumor. Het weefsel errond sterft af.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 03eeaddb4deca6944a36eb7b5231bae2, type: 3}
       displayDuration: 4
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: Hij groeit door de darmwand heen. Van hieruit kan de kanker uitzaaien.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: c7d01eb44ae34c647b26f695a342d400, type: 3}
       displayDuration: 5
       pauseAfter: 0.4
     - speakerName: Dokter
       speakerColor: {r: 0.5, g: 0.95, b: 0.85, a: 1}
       subtitleText: En al die tijd voelde Luc... niets.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 66bcd20adb47cda4196b05158e592828, type: 3}
       displayDuration: 4
       pauseAfter: 0.4
   - sequenceKey: Darm_Einde
@@ -2901,13 +2901,13 @@ MonoBehaviour:
     - speakerName: Verteller
       speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
       subtitleText: Darmkanker begint bijna altijd als een poliep. En een poliep doet geen pijn.
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: e9e499036dc6767469b0746b3b9ea10b, type: 3}
       displayDuration: 5.5
       pauseAfter: 0.4
     - speakerName: Verteller
       speakerColor: {r: 1, g: 0.82, b: 0.35, a: 1}
       subtitleText: "De stoelgangtest vindt het v\xF3\xF3r je iets voelt. Gratis, thuis, om de twee jaar, van 50 tot 74 jaar."
-      voiceClip: {fileID: 0}
+      voiceClip: {fileID: 8300000, guid: 6acaeb50638fe494296b8b47c968e8f8, type: 3}
       displayDuration: 6.5
       pauseAfter: 0.4
   onLineStarted:
