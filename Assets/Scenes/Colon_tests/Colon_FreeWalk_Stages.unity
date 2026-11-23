@@ -1744,14 +1744,15 @@ MonoBehaviour:
   instructionText: 'Bij elke poliep stelt de dokter je een vraag.
 
 
-    Kies een antwoord door ernaar te kijken. Het witte puntje toont waar je kijkt. Blijf even kijken tot het balkje onderaan helemaal vol is.
+    Kies een antwoord door ernaar te kijken tot het balkje vol is, zoals in het voorbeeld hieronder. Het witte puntje toont waar je kijkt.
 
 
-    Fout antwoorden is niet erg: je krijgt altijd uitleg. Het gaat om bijleren, niet om punten.
+    Fout antwoorden is niet erg: je krijgt altijd uitleg.
 
 
-    Probeer het nu: kijk naar de knop hieronder.'
+    Probeer het nu met de knop onderaan.'
   instructionButton: "Begrepen  \u203A"
+  showInstructionDemo: 1
   stations:
   - stage: 1
     sequenceKey: Darm_Poliep1

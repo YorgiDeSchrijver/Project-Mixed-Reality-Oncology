@@ -45,12 +45,17 @@ public class ColonStory : MonoBehaviour
     public string instructionTitle = "Zo beantwoord je de vragen";
     [TextArea(4, 10)]
     public string instructionText =
-        "Bij elke poliep stelt de dokter je een vraag.\n\n" +
-        "Kies een antwoord door ernaar te kijken. Het witte puntje toont waar je kijkt. " +
-        "Blijf even kijken tot het balkje onderaan helemaal vol is.\n\n" +
-        "Fout antwoorden is niet erg: je krijgt altijd uitleg. Het gaat om bijleren, niet om punten.\n\n" +
-        "Probeer het nu: kijk naar de knop hieronder.";
+        InstructionDefault;
     public string instructionButton = "Begrepen  ›";
+    [Tooltip("Toon een bewegend voorbeeld van hoe je een antwoord kiest")]
+    public bool showInstructionDemo = true;
+
+    public const string InstructionDefault =
+        "Bij elke poliep stelt de dokter je een vraag.\n\n" +
+        "Kies een antwoord door ernaar te kijken tot het balkje vol is, zoals in het voorbeeld hieronder. " +
+        "Het witte puntje toont waar je kijkt.\n\n" +
+        "Fout antwoorden is niet erg: je krijgt altijd uitleg.\n\n" +
+        "Probeer het nu met de knop onderaan.";
 
     [Header("Poliepen")]
     public List<StationLine> stations = new List<StationLine>
@@ -178,7 +183,7 @@ public class ColonStory : MonoBehaviour
                 // speler staat stil tot de instructie begrepen is
                 Hold();
                 bool ok = false;
-                questionPanel.ShowInfo(instructionTopic, instructionTitle, instructionText, instructionButton, () => ok = true);
+                questionPanel.ShowInfo(instructionTopic, instructionTitle, instructionText, instructionButton, () => ok = true, showInstructionDemo);
                 while (!ok) yield return null;
                 Release();
                 continue;

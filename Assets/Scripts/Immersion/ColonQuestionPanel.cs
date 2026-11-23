@@ -60,6 +60,15 @@ public class ColonQuestionPanel : MonoBehaviour
     Action onDone;
     bool showingFeedback;
     bool infoMode;           // uitlegkaart zonder antwoorden, alleen een knop
+
+    // geanimeerde demo op de instructiekaart (niet klikbaar)
+    GameObject[] demoRoot;
+    RectTransform demoRow, demoFill, demoDot;
+    Image demoBg;
+    Text demoText;
+    bool demoOn;
+    float demoStart;
+    const string DemoIdleText = "Kijk naar een antwoord tot het balkje vol is";
     int hover = -1;
     int blocked = -1;        // waar je al naar keek toen kiezen mogelijk werd: telt pas na even wegkijken
     bool blockSet;
@@ -71,7 +80,7 @@ public class ColonQuestionPanel : MonoBehaviour
     /// Toon een uitlegkaart met één knop (bv. de instructie hoe je antwoordt).
     /// De speler kiest de knop op dezelfde manier als een antwoord, dus het is meteen een oefening.
     /// </summary>
-    public void ShowInfo(string topic, string title, string body, string button, Action done)
+    public void ShowInfo(string topic, string title, string body, string button, Action done, bool showDemo = false)
     {
         current = null; infoMode = true; onDone = done; showingFeedback = true;
         if (head == null) { var cam = WorldUI.MainCamera(); if (cam != null) head = cam.transform; }
@@ -83,6 +92,9 @@ public class ColonQuestionPanel : MonoBehaviour
         for (int i = 0; i < MaxAnswers; i++) answerRects[i].gameObject.SetActive(false);
         titleText.rectTransform.offsetMin = new Vector2(50, -210); titleText.rectTransform.offsetMax = new Vector2(-50, -200);
         bodyText.rectTransform.offsetMax = new Vector2(-50, -200);
+        bodyText.rectTransform.offsetMin = new Vector2(50, showDemo ? 300 : 120);   // ruimte voor de demo
+        SetDemoVisible(showDemo);
+        demoStart = Time.time;
 
         continueLabel.text = string.IsNullOrEmpty(button) ? "Verder  ›" : button;
         continueRect.gameObject.SetActive(true);
@@ -103,6 +115,8 @@ public class ColonQuestionPanel : MonoBehaviour
     {
         if (q == null || q.answers.Count == 0) { done?.Invoke(); return; }
         current = q; onDone = done; showingFeedback = false; infoMode = false;
+        SetDemoVisible(false);
+        bodyText.rectTransform.offsetMin = new Vector2(50, 120);
         continueLabel.text = "Verder  ›";
         if (head == null) { var cam = WorldUI.MainCamera(); if (cam != null) head = cam.transform; }
 
@@ -136,6 +150,7 @@ public class ColonQuestionPanel : MonoBehaviour
     {
         if (!IsOpen) return;
         PlaceInFront(false);
+        if (demoOn) AnimateDemo(Time.time - demoStart);
 
         int keyPick = allowKeyboard ? KeyboardPick() : -1;
         int target = -1;
@@ -211,8 +226,53 @@ public class ColonQuestionPanel : MonoBehaviour
         onAnswered?.Invoke(q, index, ok);
     }
 
+    void SetDemoVisible(bool on)
+    {
+        demoOn = on;
+        if (demoRoot == null) return;
+        foreach (var g in demoRoot) g.SetActive(on);
+    }
+
+    // Lus van ~4,5 s: puntje beweegt naar het antwoord, balkje loopt vol, antwoord wordt gekozen, opnieuw.
+    void AnimateDemo(float t)
+    {
+        const float move = 1.0f, pause = 0.3f, chosen = 1.1f, rest = 0.6f;
+        float fillTime = dwellSeconds;
+        float period = move + pause + fillTime + chosen + rest;
+        t %= period;
+
+        float w = demoRow.rect.width;
+        Vector2 start = new Vector2(-w * 0.42f, 110f);   // boven het antwoord, links
+        Vector2 end = new Vector2(-w * 0.05f, 0f);       // midden op het antwoord
+
+        if (t < move)
+        {
+            float k = Mathf.SmoothStep(0f, 1f, t / move);
+            demoDot.anchoredPosition = Vector2.Lerp(start, end, k);
+            demoBg.color = answerIdle; SetFill(demoFill, 0f); demoText.text = DemoIdleText;
+        }
+        else if (t < move + pause + fillTime)
+        {
+            demoDot.anchoredPosition = end;
+            demoBg.color = answerHover;
+            SetFill(demoFill, Mathf.Clamp01((t - move - pause) / fillTime));
+        }
+        else if (t < move + pause + fillTime + chosen)
+        {
+            demoDot.anchoredPosition = end;
+            demoBg.color = correctColor; SetFill(demoFill, 0f);
+            demoText.text = "Gekozen!";
+        }
+        else
+        {
+            demoDot.anchoredPosition = start;
+            demoBg.color = answerIdle; SetFill(demoFill, 0f); demoText.text = DemoIdleText;
+        }
+    }
+
     void Close()
     {
+        SetDemoVisible(false);
         canvas.gameObject.SetActive(false);
         current = null; infoMode = false;
         var cb = onDone; onDone = null;
@@ -332,6 +392,20 @@ public class ColonQuestionPanel : MonoBehaviour
         continueLabel = WorldUI.AddText(continueRect, "Verder  ›", 32, Color.white, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, FontStyle.Bold);
         var cf = WorldUI.AddPanel(continueRect, accent, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(0, 6));
         continueFill = cf.rectTransform;
+
+        // demo voor de instructiekaart: een voorbeeldantwoord met een puntje dat ernaar "kijkt"
+        var demoLabel = WorldUI.AddText(root, "Voorbeeld", 24, accent, TextAnchor.LowerLeft,
+            new Vector2(0, 0), new Vector2(1, 0), new Vector2(160, 250), new Vector2(-160, 285), FontStyle.Bold);
+        var dRow = WorldUI.AddPanel(root, answerIdle, new Vector2(0, 0), new Vector2(1, 0), new Vector2(160, 150), new Vector2(-160, 245));
+        demoRow = dRow.rectTransform; demoBg = dRow;
+        demoText = WorldUI.AddText(demoRow, "Kijk naar een antwoord tot het balkje vol is", 30, Color.white, TextAnchor.MiddleLeft,
+            Vector2.zero, Vector2.one, new Vector2(24, 8), new Vector2(-24, -8));
+        var dFill = WorldUI.AddPanel(demoRow, accent, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(0, 6));
+        demoFill = dFill.rectTransform;
+        var dDot = WorldUI.AddPanel(demoRow, new Color(1f, 1f, 1f, 0.95f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-8, -8), new Vector2(8, 8));
+        demoDot = dDot.rectTransform;
+        demoRoot = new GameObject[] { demoLabel.gameObject, dRow.gameObject };
+        SetDemoVisible(false);
 
         var ret = WorldUI.AddPanel(root, new Color(1f, 1f, 1f, 0.85f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-7, -7), new Vector2(7, 7));
         reticle = ret.rectTransform;
