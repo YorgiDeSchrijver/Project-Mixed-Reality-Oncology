@@ -221,44 +221,38 @@ public class ColonScare : MonoBehaviour
         return clip;
     }
 
-    // Plotselinge dreun met een dissonant akkoord dat uitzwelt en een ruisslag aan het begin
+    // Diepe, dofe dreun (zoals een zware klap in een holle ruimte) met een korte, donkere ruisstoot en een
+    // lage rommel die uitsterft. Geen hoge tonen of akkoord: dat klonk als een synthesizer. Blijft ruim onder 1.0.
     static AudioClip CreateStinger()
     {
         const int rate = 22050;
-        const float length = 2.6f;
+        const float length = 1.8f;
         int n = Mathf.CeilToInt(rate * length);
         var data = new float[n];
         var rng = new System.Random(77);
-        float low = 0f, phaseBoom = 0f;
-        float[] chord = { 233.1f, 246.9f, 349.2f, 369.99f };   // Bb, B, F, F#: bijten tegen elkaar
-        var chordPhase = new float[chord.Length];
+        float low = 0f, low2 = 0f, phaseBoom = 0f, phaseRumble = 0f;
 
         for (int i = 0; i < n; i++)
         {
             float t = i / (float)rate;
 
-            // boom: toon zakt van 95 naar 38 Hz
-            float fb = 38f + 57f * Mathf.Exp(-t * 7f);
+            // dreun: toon zakt snel van 75 naar 35 Hz, zachte aanzet tegen een klik
+            float fb = 35f + 40f * Mathf.Exp(-t * 9f);
             phaseBoom += 2f * Mathf.PI * fb / rate;
-            float boom = Mathf.Sin(phaseBoom) * (1f - Mathf.Exp(-t * 600f)) * Mathf.Exp(-t * 2.2f);
+            float boom = Mathf.Sin(phaseBoom) * (1f - Mathf.Exp(-t * 250f)) * Mathf.Exp(-t * 3.2f);
 
-            // ruisslag, laagdoorlaat gefilterd
+            // doffe ruisstoot (sterk laagdoorlaat gefilterd), kort
             float noise = (float)(rng.NextDouble() * 2.0 - 1.0);
-            low += (noise - low) * 0.12f;
-            float hit = low * Mathf.Exp(-t * 9f) * 1.6f;
+            low += (noise - low) * 0.05f;
+            low2 += (low - low2) * 0.05f;
+            float thud = low2 * 9f * Mathf.Exp(-t * 14f);
 
-            // akkoord: komt op na de slag en sterft langzaam uit
-            float swell = (1f - Mathf.Exp(-t * 6f)) * Mathf.Exp(-t * 1.5f);
-            float ch = 0f;
-            for (int c = 0; c < chord.Length; c++)
-            {
-                chordPhase[c] += 2f * Mathf.PI * chord[c] * (1f + 0.012f * Mathf.Sin(t * (3f + c))) / rate;
-                ch += Mathf.Sin(chordPhase[c]) + 0.3f * Mathf.Sin(chordPhase[c] * 2f);
-            }
-            ch *= 0.12f * swell;
+            // lage rommel die langer naklinkt
+            phaseRumble += 2f * Mathf.PI * (46f + 3f * Mathf.Sin(t * 5f)) / rate;
+            float rumble = Mathf.Sin(phaseRumble) * 0.25f * (1f - Mathf.Exp(-t * 20f)) * Mathf.Exp(-t * 2f);
 
-            float fadeOut = Mathf.Clamp01((length - t) / 0.3f);
-            data[i] = Mathf.Clamp((boom * 0.9f + hit + ch) * fadeOut, -1f, 1f);
+            float fadeOut = Mathf.Clamp01((length - t) / 0.25f);
+            data[i] = (boom * 0.7f + thud * 0.3f + rumble) * fadeOut * 0.8f;
         }
         var clip = AudioClip.Create("Colon_Stinger", n, 1, rate, false);
         clip.SetData(data, 0);
