@@ -61,7 +61,8 @@ public class ColonStory : MonoBehaviour
 
     readonly Queue<string> queue = new Queue<string>();
     readonly HashSet<string> played = new HashSet<string>();
-    readonly HashSet<string> holdKeys = new HashSet<string>();
+    readonly HashSet<string> heldKeys = new HashSet<string>();   // poliepen waarvoor de speler nu stilstaat
+    int holds;
     bool busy;
 
     void Start()
@@ -75,14 +76,8 @@ public class ColonStory : MonoBehaviour
         {
             string key = KeyForStage(st.stage);
             if (string.IsNullOrEmpty(key)) continue;
-            holdKeys.Add(key);
-            if (trigger == Trigger.Arrive)
-                st.onArrive.AddListener(() => Request(key));
-            else
-            {
-                st.onInspected.AddListener(() => Request(key));
-                st.onArrive.AddListener(() => StartCoroutine(Fallback(key)));
-            }
+            st.onArrive.AddListener(() => OnArrive(key));
+            if (trigger == Trigger.Inspected) st.onInspected.AddListener(() => Request(key));
         }
 
         if (rider != null && !string.IsNullOrEmpty(endKey)) rider.onReachedEnd.AddListener(() => Request(endKey));
@@ -107,10 +102,32 @@ public class ColonStory : MonoBehaviour
         Request(introKey);
     }
 
+    // Bij aankomst meteen stilzetten (anders loopt de speler de poliep voorbij en komt de uitleg
+    // pas als de poliep al achter hem ligt). Daarna starten bij kijken, of na de fallback-tijd.
+    void OnArrive(string key)
+    {
+        if (played.Contains(key) || heldKeys.Contains(key)) return;
+        if (holdPlayerDuringStation && heldKeys.Add(key)) Hold();
+        if (trigger == Trigger.Arrive) Request(key);
+        else StartCoroutine(Fallback(key));
+    }
+
     IEnumerator Fallback(string key)
     {
         yield return new WaitForSeconds(inspectFallback);
         Request(key);   // doet niets als hij al gespeeld of in de wachtrij staat
+    }
+
+    void Hold()
+    {
+        holds++;
+        if (rider != null) rider.SetInputEnabled(false);
+    }
+
+    void Release()
+    {
+        holds = Mathf.Max(0, holds - 1);
+        if (holds == 0 && rider != null) rider.SetInputEnabled(true);
     }
 
     /// <summary>Vraag een dialoog aan. Speelt maar één keer; wacht als er al iets verteld wordt.</summary>
@@ -131,8 +148,6 @@ public class ColonStory : MonoBehaviour
             var dm = DialogueManager.Instance;
             if (dm == null) break;
 
-            bool hold = holdPlayerDuringStation && holdKeys.Contains(key) && rider != null;
-            if (hold) rider.SetInputEnabled(false);
             onStoryStarted?.Invoke(key);
 
             bool done = false;
@@ -148,7 +163,7 @@ public class ColonStory : MonoBehaviour
                 while (!answered) yield return null;
             }
 
-            if (hold) rider.SetInputEnabled(true);
+            if (heldKeys.Remove(key)) Release();
             onStoryFinished?.Invoke(key);
         }
         busy = false;
