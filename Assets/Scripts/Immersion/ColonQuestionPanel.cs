@@ -54,16 +54,43 @@ public class ColonQuestionPanel : MonoBehaviour
     readonly RectTransform[] answerFill = new RectTransform[MaxAnswers];
     RectTransform continueRect, continueFill, reticle;
     Image continueBg;
+    Text continueLabel;
 
     ColonQuestion current;
     Action onDone;
     bool showingFeedback;
+    bool infoMode;           // uitlegkaart zonder antwoorden, alleen een knop
     int hover = -1;
     int blocked = -1;        // waar je al naar keek toen kiezen mogelijk werd: telt pas na even wegkijken
     bool blockSet;
     float hoverTime, readyAt;
 
-    public bool IsOpen => current != null;
+    public bool IsOpen => current != null || infoMode;
+
+    /// <summary>
+    /// Toon een uitlegkaart met één knop (bv. de instructie hoe je antwoordt).
+    /// De speler kiest de knop op dezelfde manier als een antwoord, dus het is meteen een oefening.
+    /// </summary>
+    public void ShowInfo(string topic, string title, string body, string button, Action done)
+    {
+        current = null; infoMode = true; onDone = done; showingFeedback = true;
+        if (head == null) { var cam = WorldUI.MainCamera(); if (cam != null) head = cam.transform; }
+
+        topicText.text = topic;
+        questionText.text = title;
+        titleText.text = "";
+        bodyText.text = body;
+        for (int i = 0; i < MaxAnswers; i++) answerRects[i].gameObject.SetActive(false);
+        titleText.rectTransform.offsetMin = new Vector2(50, -210); titleText.rectTransform.offsetMax = new Vector2(-50, -200);
+        bodyText.rectTransform.offsetMax = new Vector2(-50, -200);
+
+        continueLabel.text = string.IsNullOrEmpty(button) ? "Verder  ›" : button;
+        continueRect.gameObject.SetActive(true);
+        SetFill(continueFill, 0f);
+        PlaceInFront(true);
+        canvas.gameObject.SetActive(true);
+        hover = -1; hoverTime = 0f; readyAt = Time.time + inputDelay; blockSet = false;
+    }
 
     void Awake()
     {
@@ -75,7 +102,8 @@ public class ColonQuestionPanel : MonoBehaviour
     public void Ask(ColonQuestion q, Action done)
     {
         if (q == null || q.answers.Count == 0) { done?.Invoke(); return; }
-        current = q; onDone = done; showingFeedback = false;
+        current = q; onDone = done; showingFeedback = false; infoMode = false;
+        continueLabel.text = "Verder  ›";
         if (head == null) { var cam = WorldUI.MainCamera(); if (cam != null) head = cam.transform; }
 
         topicText.text = string.IsNullOrEmpty(q.topic) ? "Even nadenken" : q.topic;
@@ -106,7 +134,7 @@ public class ColonQuestionPanel : MonoBehaviour
 
     void Update()
     {
-        if (current == null) return;
+        if (!IsOpen) return;
         PlaceInFront(false);
 
         int keyPick = allowKeyboard ? KeyboardPick() : -1;
@@ -186,7 +214,7 @@ public class ColonQuestionPanel : MonoBehaviour
     void Close()
     {
         canvas.gameObject.SetActive(false);
-        current = null;
+        current = null; infoMode = false;
         var cb = onDone; onDone = null;
         cb?.Invoke();
     }
@@ -301,7 +329,7 @@ public class ColonQuestionPanel : MonoBehaviour
 
         continueBg = WorldUI.AddPanel(root, answerIdle, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(-170, 30), new Vector2(170, 100));
         continueRect = continueBg.rectTransform;
-        WorldUI.AddText(continueRect, "Verder  ›", 32, Color.white, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, FontStyle.Bold);
+        continueLabel = WorldUI.AddText(continueRect, "Verder  ›", 32, Color.white, TextAnchor.MiddleCenter, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, FontStyle.Bold);
         var cf = WorldUI.AddPanel(continueRect, accent, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(0, 6));
         continueFill = cf.rectTransform;
 

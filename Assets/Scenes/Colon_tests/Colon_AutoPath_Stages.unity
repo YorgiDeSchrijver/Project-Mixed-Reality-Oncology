@@ -3268,6 +3268,20 @@ MonoBehaviour:
   introKey: Darm_Intro
   introDelay: 1.5
   endKey: Darm_Einde
+  showInstruction: 1
+  instructionTopic: Even uitleggen
+  instructionTitle: Zo beantwoord je de vragen
+  instructionText: 'Bij elke poliep stelt de dokter je een vraag.
+
+
+    Kies een antwoord door ernaar te kijken. Het witte puntje toont waar je kijkt. Blijf even kijken tot het balkje onderaan helemaal vol is.
+
+
+    Fout antwoorden is niet erg: je krijgt altijd uitleg. Het gaat om bijleren, niet om punten.
+
+
+    Probeer het nu: kijk naar de knop hieronder.'
+  instructionButton: "Begrepen  \u203A"
   stations:
   - stage: 1
     sequenceKey: Darm_Poliep1

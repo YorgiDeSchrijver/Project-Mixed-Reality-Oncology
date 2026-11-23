@@ -38,6 +38,20 @@ public class ColonStory : MonoBehaviour
     public float introDelay = 1.5f;
     public string endKey = "Darm_Einde";
 
+    [Header("Instructie (na de intro)")]
+    [Tooltip("Korte uitleg hoe je de vragen beantwoordt. De speler oefent meteen door de knop te kiezen.")]
+    public bool showInstruction = true;
+    public string instructionTopic = "Even uitleggen";
+    public string instructionTitle = "Zo beantwoord je de vragen";
+    [TextArea(4, 10)]
+    public string instructionText =
+        "Bij elke poliep stelt de dokter je een vraag.\n\n" +
+        "Kies een antwoord door ernaar te kijken. Het witte puntje toont waar je kijkt. " +
+        "Blijf even kijken tot het balkje onderaan helemaal vol is.\n\n" +
+        "Fout antwoorden is niet erg: je krijgt altijd uitleg. Het gaat om bijleren, niet om punten.\n\n" +
+        "Probeer het nu: kijk naar de knop hieronder.";
+    public string instructionButton = "Begrepen  ›";
+
     [Header("Poliepen")]
     public List<StationLine> stations = new List<StationLine>
     {
@@ -82,7 +96,7 @@ public class ColonStory : MonoBehaviour
         }
 
         if (rider != null && !string.IsNullOrEmpty(endKey)) rider.onReachedEnd.AddListener(() => Request(endKey));
-        if (!string.IsNullOrEmpty(introKey)) StartCoroutine(PlayIntro());
+        StartCoroutine(PlayIntro());   // intro (indien ingesteld) en daarna de instructie
     }
 
     string KeyForStage(int stage)
@@ -97,10 +111,13 @@ public class ColonStory : MonoBehaviour
         return null;
     }
 
+    const string InstructionKey = "__Instructie";
+
     IEnumerator PlayIntro()
     {
         yield return new WaitForSeconds(introDelay);
         Request(introKey);
+        if (showInstruction && questionPanel != null) Request(InstructionKey);   // direct na de intro, vóór de eerste poliep
     }
 
     // Bij aankomst meteen stilzetten (anders loopt de speler de poliep voorbij en komt de uitleg
@@ -155,6 +172,18 @@ public class ColonStory : MonoBehaviour
         while (queue.Count > 0)
         {
             string key = queue.Dequeue();
+
+            if (key == InstructionKey)
+            {
+                // speler staat stil tot de instructie begrepen is
+                Hold();
+                bool ok = false;
+                questionPanel.ShowInfo(instructionTopic, instructionTitle, instructionText, instructionButton, () => ok = true);
+                while (!ok) yield return null;
+                Release();
+                continue;
+            }
+
             var dm = DialogueManager.Instance;
             if (dm == null) break;
 
