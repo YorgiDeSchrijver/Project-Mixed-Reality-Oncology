@@ -3113,7 +3113,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b9593251559d35e4a97a1353a43e0619, type: 2}
+  - {fileID: 2100000, guid: 3715bcb9f3e5af4458dc188006910103, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3144,7 +3144,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1595419985}
-  m_Mesh: {fileID: 4300000, guid: ea78898e29f19ea4aa12331d4a2a7499, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 74185dc91623f1d4093a789075f88b6e, type: 2}
 --- !u!4 &1595419988
 Transform:
   m_ObjectHideFlags: 0
@@ -3155,7 +3155,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.14076592, y: -0.519603, z: -0.08726102, w: 0.8382024}
   m_LocalPosition: {x: -47.332653, y: 4.1781645, z: 12.393161}
-  m_LocalScale: {x: 2.88198, y: 2.88198, z: 1.296891}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -3405,7 +3405,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b9593251559d35e4a97a1353a43e0619, type: 2}
+  - {fileID: 2100000, guid: 3715bcb9f3e5af4458dc188006910103, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3436,7 +3436,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1774997864}
-  m_Mesh: {fileID: 4300000, guid: ea78898e29f19ea4aa12331d4a2a7499, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 74185dc91623f1d4093a789075f88b6e, type: 2}
 --- !u!4 &1774997867
 Transform:
   m_ObjectHideFlags: 0
@@ -3447,7 +3447,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.00058419496, y: 0.99941504, z: -0.023557676, w: -0.024783991}
   m_LocalPosition: {x: 1.639441, y: 1.6778866, z: -10.779869}
-  m_LocalScale: {x: 2.7280798, y: 2.7280798, z: 1.2276359}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}

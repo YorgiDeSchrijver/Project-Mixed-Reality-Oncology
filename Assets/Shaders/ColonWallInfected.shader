@@ -52,6 +52,8 @@ Shader "Oncologie/ColonWallInfected"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             // In een darm is er geen lucht om te weerspiegelen: standaard uit (ook goedkoper op de Quest)
             #pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
+            // Alleen voor de uiteinden: vertex-kleur (rood kanaal) dimt het licht, zodat de darm in het donker verdwijnt
+            #pragma shader_feature_local _VERTEX_SHADE
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
@@ -67,6 +69,9 @@ Shader "Oncologie/ColonWallInfected"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
+            #if defined(_VERTEX_SHADE)
+                half4  color      : COLOR;
+            #endif
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -77,6 +82,7 @@ Shader "Oncologie/ColonWallInfected"
                 float3 positionWS : TEXCOORD1;
                 float3 normalWS   : TEXCOORD2;
                 half   fogFactor  : TEXCOORD3;
+                half   shade      : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -93,6 +99,11 @@ Shader "Oncologie/ColonWallInfected"
                 o.normalWS = TransformObjectToWorldNormal(v.normalOS);
                 o.uv = TRANSFORM_TEX(v.uv, _BaseMap);
                 o.fogFactor = ComputeFogFactor(p.positionCS.z);
+            #if defined(_VERTEX_SHADE)
+                o.shade = v.color.r;
+            #else
+                o.shade = 1;
+            #endif
                 return o;
             }
 
@@ -177,6 +188,7 @@ Shader "Oncologie/ColonWallInfected"
                 s.alpha = 1;
 
                 half4 color = UniversalFragmentPBR(inputData, s);
+                color.rgb *= i.shade;   // 1 = normaal; naar 0 = verdwijnt in het donker (uiteinden)
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
                 return color;
             }
